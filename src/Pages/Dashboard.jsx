@@ -19,57 +19,12 @@ export default function Dashboard({ usuario, onLogout }) {
   const [realizada, setRealizada] = useState(false);
   const [nota, setNota] = useState('');
   const [fechaVencimiento, setFechaVencimiento] = useState(''); 
-  const [usuarioId, setUsuarioId] = useState(''); // Cambiado para que esté vacío por defecto
+  const [usuarioId, setUsuarioId] = useState('1'); // Default 1
 
-  // Simulación de usuario logueado (en tu código real vendrá del localStorage)
-  const wipeUser = { username: 'Usuario' };
+  const user = localStorage.getItem('usuario')
+  const wipeUser = JSON.parse(user) 
 
-  // Simulación de datos para desarrollo - en tu código real esto vendrá de la API
   useEffect(() => {
-    // Simulación de tareas
-    const tareasSimuladas = [
-      {
-        id: 1,
-        titulo: 'Completar proyecto',
-        descripcion: 'Terminar el dashboard',
-        estado: 'en_progreso',
-        favorita: true,
-        realizada: false,
-        nota: 'Revisar el diseño',
-        fechaVencimiento: '2025-07-15',
-        usuarioId: 1,
-        subtareas: [
-          { id: 1, texto: 'Diseñar interfaz', completada: true },
-          { id: 2, texto: 'Implementar funcionalidad', completada: false }
-        ]
-      },
-      {
-        id: 2,
-        titulo: 'Revisar documentación',
-        descripcion: 'Actualizar docs del proyecto',
-        estado: 'pendiente',
-        favorita: false,
-        realizada: false,
-        nota: '',
-        fechaVencimiento: '2025-07-20',
-        usuarioId: 2,
-        subtareas: []
-      }
-    ];
-
-    // Simulación de usuarios
-    const usuariosSimulados = [
-      { id: 1, username: 'Juan Pérez' },
-      { id: 2, username: 'María García' },
-      { id: 3, username: 'Carlos López' },
-      { id: 4, username: 'Ana Martínez' }
-    ];
-
-    setTareas(tareasSimuladas);
-    setUsuarios(usuariosSimulados);
-
-    // Tu código original comentado para referencia:
-    /*
     const cargarTareas = async () => {
       try {
         const token = localStorage.getItem('token'); 
@@ -85,10 +40,12 @@ export default function Dashboard({ usuario, onLogout }) {
       }
     };
 
+    // Cargar usuarios para el selector
     const cargarUsuarios = async () => {
       try {
         const token = localStorage.getItem('token');
         const response = await fetch('http://localhost:3000/users/Listar', {
+
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -97,12 +54,13 @@ export default function Dashboard({ usuario, onLogout }) {
         Array.isArray(data) ? setUsuarios(data) : setUsuarios([]);
       } catch (error) {
         console.error('Error al cargar usuarios:', error);
+       
+        
       }
     };
 
     cargarTareas();
     cargarUsuarios();
-    */
   }, []);
 
   // Limpiar el formulario
@@ -114,28 +72,22 @@ export default function Dashboard({ usuario, onLogout }) {
     setRealizada(false);
     setNota('');
     setFechaVencimiento('');
-    setUsuarioId('');
+    setUsuarioId('1');
   };
 
   // Añadir nueva tarea
   const agregarTarea = async () => {
     if (!titulo.trim()) return;
-    if (!usuarioId) {
-      alert('Por favor selecciona un usuario');
-      return;
-    }
 
     try {
-      // Simulación - en tu código real descomenta esto:
-      /*
       const token = localStorage.getItem('token');
 
       const nuevaTarea = {
         titulo: titulo,
         descripcion: descripcion,
         estado: estado,
-        favorito: false,
-        realizada: false,
+        favorito: false, // Siempre false al crear
+        realizada: false, // Siempre false al crear
         nota: nota,
         fechaVencimiento: fechaVencimiento,
         usuarioId: usuarioId
@@ -155,22 +107,6 @@ export default function Dashboard({ usuario, onLogout }) {
       }
 
       const tareaCreada = await response.json();
-      */
-
-      // Simulación para desarrollo
-      const tareaCreada = {
-        id: Date.now(),
-        titulo: titulo,
-        descripcion: descripcion,
-        estado: estado,
-        favorita: false,
-        realizada: false,
-        nota: nota,
-        fechaVencimiento: fechaVencimiento,
-        usuarioId: parseInt(usuarioId),
-        subtareas: []
-      };
-
       setTareas([tareaCreada, ...tareas]);
       limpiarFormulario();
       setMostrarModalTarea(false);
@@ -183,12 +119,31 @@ export default function Dashboard({ usuario, onLogout }) {
     const tarea = tareas.find(t => t.id === id);
     if (!tarea) return;
 
-    // Simulación - en tu código real descomenta la parte de la API
-    const tareaActualizada = { ...tarea, realizada: !tarea.realizada };
-    setTareas(tareas.map(t => (t.id === id ? tareaActualizada : t)));
+    try {
+      const token = localStorage.getItem('token');
+      const body = {
+        realizada: !tarea.realizada,
+      };
 
-    if (tareaSeleccionada && tareaSeleccionada.id === id) {
-      setTareaSeleccionada(tareaActualizada);
+      const response = await fetch(`http://localhost:3000/tarea/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) throw new Error('Error al actualizar tarea');
+
+      const tareaActualizada = await response.json();
+      setTareas(tareas.map(t => (t.id === id ? tareaActualizada : t)));
+
+      if (tareaSeleccionada && tareaSeleccionada.id === id) {
+        setTareaSeleccionada(tareaActualizada);
+      }
+    } catch (error) {
+      console.error('Error al marcar como completada:', error);
     }
   };
 
@@ -196,20 +151,52 @@ export default function Dashboard({ usuario, onLogout }) {
     const tarea = tareas.find(t => t.id === id);
     if (!tarea) return;
 
-    // Simulación - en tu código real descomenta la parte de la API
-    const tareaActualizada = { ...tarea, favorita: !tarea.favorita };
-    setTareas(tareas.map(t => (t.id === id ? tareaActualizada : t)));
+    try {
+      const token = localStorage.getItem('token');
+      const body = {
+        favorita: !tarea.favorita,
+      };
 
-    if (tareaSeleccionada && tareaSeleccionada.id === id) {
-      setTareaSeleccionada(tareaActualizada);
+      const response = await fetch(`http://localhost:3000/tarea/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) throw new Error('Error al actualizar favorita');
+
+      const tareaActualizada = await response.json();
+      setTareas(tareas.map(t => (t.id === id ? tareaActualizada : t)));
+
+      if (tareaSeleccionada && tareaSeleccionada.id === id) {
+        setTareaSeleccionada(tareaActualizada);
+      }
+    } catch (error) {
+      console.error('Error al marcar como favorita:', error);
     }
   };
 
   // Eliminar tarea 
   const eliminarTarea = async (id) => {
-    // Simulación - en tu código real descomenta la parte de la API
-    setTareas(tareas.filter(t => t.id !== id));
-    setTareaSeleccionada(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:3000/tarea/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Error al eliminar tarea');
+
+      setTareas(tareas.filter(t => t.id !== id));
+      setTareaSeleccionada(null);
+    } catch (error) {
+      console.error('Error al eliminar tarea:', error);
+    }
   };
 
   const toggleCompletadaSubtarea = idSubtarea => {
@@ -260,15 +247,12 @@ export default function Dashboard({ usuario, onLogout }) {
     setMostrarInputSubtarea(false);
   };
 
-  // Función para obtener el nombre del usuario asignado
-  const obtenerNombreUsuario = (usuarioId) => {
-    const usuario = usuarios.find(u => u.id === usuarioId);
-    return usuario ? usuario.username : 'Usuario no encontrado';
-  };
-
   return (
+
+
+    
     <div className="flex h-screen bg-gray-50">
-      {/* Modal para crear tarea */}
+      {/* Modal para crear tarea - MEJORADO */}
       {mostrarModalTarea && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
@@ -280,20 +264,20 @@ export default function Dashboard({ usuario, onLogout }) {
                 placeholder="Título"
                 value={titulo}
                 onChange={e => setTitulo(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none"
+                className="w-full border border-gray-300 p-2 rounded"
               />
               <input
                 type="text"
                 placeholder="Descripción"
                 value={descripcion}
                 onChange={e => setDescripcion(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none"
+                className="w-full border border-gray-300 p-2 rounded"
               />
               
               <select
                 value={estado}
                 onChange={e => setEstado(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none"
+                className="w-full border border-gray-300 p-2 rounded"
               >
                 <option value="pendiente">Pendiente</option>
                 <option value="en_progreso">En progreso</option>
@@ -305,39 +289,41 @@ export default function Dashboard({ usuario, onLogout }) {
                 placeholder="Nota"
                 value={nota}
                 onChange={e => setNota(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none"
+                className="w-full border border-gray-300 p-2 rounded"
               />
               
               <input
                 type="date"
                 value={fechaVencimiento}
                 onChange={e => setFechaVencimiento(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none"
+                className="w-full border border-gray-300 p-2 rounded"
               />
 
-              {/* Selector de usuarios mejorado */}
+              {/* SELECTOR DE USUARIOS MEJORADO */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Asignar a Usuario *
+                  Asignar a Usuario
                 </label>
                 <select
                   value={usuarioId}
                   onChange={e => setUsuarioId(e.target.value)}
-                  className="w-full border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none"
-                  required
+                  className="w-full border border-gray-300 p-2 rounded"
                 >
                   <option value="">Seleccionar usuario...</option>
+                 
                   {usuarios.map(usuario => (
                     <option key={usuario.id} value={usuario.id}>
-                      {usuario.username}
+                      {usuario.username} 
                     </option>
                   ))}
                 </select>
               </div>
 
+              {/* ELIMINÉ LOS CHECKBOXES DE FAVORITO Y REALIZADA */}
+
               <div className="flex justify-end space-x-2">
                 <button
-                  className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded transition-colors"
+                  className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
                   onClick={() => {
                     setMostrarModalTarea(false);
                     limpiarFormulario();
@@ -346,7 +332,7 @@ export default function Dashboard({ usuario, onLogout }) {
                   Cancelar
                 </button>
                 <button
-                  className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded transition-colors"
+                  className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded"
                   onClick={agregarTarea}
                 >
                   Guardar
@@ -357,10 +343,16 @@ export default function Dashboard({ usuario, onLogout }) {
         </div>
       )}
 
+
+
+
+
+
+
       {/* Panel izquierdo 60% */}
       <section className="w-1/2 border-r border-amber-50 p-6 overflow-auto">
         
-        {/* Menu usuario arriba a la derecha */}
+        {/* Menu usuario arriba a la derecha - MEJORADO */}
         <div className="relative ml-auto mb-4 flex justify-end">
           <button
             onClick={() => setMostrarMenuUsuario(!mostrarMenuUsuario)}
@@ -380,12 +372,12 @@ export default function Dashboard({ usuario, onLogout }) {
           </button>
 
           {mostrarMenuUsuario && (
-            <div className="absolute top-8 right-0 mt-1 w-48 bg-white border border-gray-200 rounded shadow-lg z-10">
+            <div className="absolute top-8 right-0 mt-1 w-48 bg-white border border-gray-200 rounded shadow-lg">
               <div className="px-3 py-2 text-blue-900 font-bold border-b truncate">
                 {wipeUser?.username || 'Usuario'}
               </div>
               <button
-                onClick={() => console.log('Cerrar sesión')}
+                onClick={onLogout}
                 className="w-full text-left px-3 py-2 text-red-700 font-bold hover:bg-gray-100"
               >
                 Cerrar sesión
@@ -405,6 +397,7 @@ export default function Dashboard({ usuario, onLogout }) {
             onClick={() => setMostrarModalTarea(true)}
             readOnly
           />
+         
         </div>
 
         {/* Lista de tareas */}
@@ -412,65 +405,57 @@ export default function Dashboard({ usuario, onLogout }) {
           {tareas.map(tarea => (
             <li
               key={tarea.id}
-              className="cursor-pointer bg-white p-4 rounded shadow hover:bg-blue-50 transition-colors"
+              className="cursor-pointer bg-white p-4 rounded shadow flex justify-between items-center hover:bg-blue-50"
               onClick={() => setTareaSeleccionada(tarea)}
             >
-              <div className="flex justify-between items-start">
-                <label
-                  className="flex items-center space-x-3 flex-grow cursor-pointer"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <input 
-                    className="accent-blue-900"
-                    type="checkbox"
-                    checked={tarea.realizada}
-                    onChange={() => toggleCompletadaTarea(tarea.id)}
-                  />
-                  <div className="flex-grow">
-                    <span className={tarea.realizada ? 'line-through text-gray-400' : 'text-gray-900'}>
-                      {tarea.titulo}
-                    </span>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Asignado a: {obtenerNombreUsuario(tarea.usuarioId)}
-                    </div>
-                  </div>
-                </label>
+              <label
+                className="flex items-center space-x-3 flex-grow cursor-pointer"
+                onClick={e => e.stopPropagation()}
+              >
+                <input className="accent-blue-900"
+                  type="checkbox"
+                  checked={tarea.realizada}
+                  onChange={() => toggleCompletadaTarea(tarea.id)}
+                />
+                <span className={tarea.realizada ? 'line-through text-gray-400' : ''}>
+                  {tarea.titulo}
+                </span>
+              </label>
 
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    toggleFavorita(tarea.id);
-                  }}
-                  aria-label={tarea.favorita ? 'Quitar de favoritas' : 'Marcar como favorita'}
-                  className="focus:outline-none ml-3"
-                >
-                  {tarea.favorita ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-blue-800"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-gray-400 hover:text-blue-900 transition"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"
-                      />
-                    </svg>
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  toggleFavorita(tarea.id);
+                }}
+                aria-label={tarea.favorita ? 'Quitar de favoritas' : 'Marcar como favorita'}
+                className="focus:outline-none ml-3"
+              >
+                {tarea.favorita ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-blue-800"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-gray-400 hover:text-blue-900 transition"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"
+                    />
+                  </svg>
+                )}
+              </button>
             </li>
           ))}
         </ul>
@@ -498,7 +483,7 @@ export default function Dashboard({ usuario, onLogout }) {
               />
               <button
                 onClick={agregarSubtarea}
-                className="bg-blue-900 text-white px-4 rounded hover:bg-blue-800 transition"
+                className="bg-blue-900 text-white px-4 rounded hover:bg-blue-1000 transition"
               >
                 Agregar
               </button>
@@ -506,60 +491,50 @@ export default function Dashboard({ usuario, onLogout }) {
 
             {/* Título de la tarea */}
             <div className="flex items-center space-x-2 text-blue-900 focus:outline-none">
-              <h2 className="font-bold text-2xl text-justify flex-grow">{tareaSeleccionada.titulo}</h2>
+              <h2 className="font-bold text-2xl text-justify">{tareaSeleccionada.titulo}</h2>
               
-              <button
-                onClick={() => toggleFavorita(tareaSeleccionada.id)}
-                aria-label={
-                  tareaSeleccionada.favorita
-                    ? 'Quitar de favoritas'
-                    : 'Marcar como favorita'
-                }
-                className="focus:outline-none"
-              >
-                {tareaSeleccionada.favorita ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-blue-800"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    stroke="none"
-                  >
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-gray-400 transition"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"
-                    />
-                  </svg>
-                )}
-              </button>
+              <div className="flex space-x-4 items-center">
+                <button
+                  onClick={() => toggleFavorita(tareaSeleccionada.id)}
+                  aria-label={
+                    tareaSeleccionada.favorita
+                      ? 'Quitar de favoritas'
+                      : 'Marcar como favorita'
+                  }
+                  className="focus:outline-none"
+                >
+                  {tareaSeleccionada.favorita ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 text-blue-800"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke="none"
+                    >
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 text-gray-400 transition"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
-            {/* Información adicional de la tarea */}
-            <div className="mt-4 mb-4 text-sm text-gray-600">
-              <p><strong>Asignado a:</strong> {obtenerNombreUsuario(tareaSeleccionada.usuarioId)}</p>
-              {tareaSeleccionada.descripcion && (
-                <p><strong>Descripción:</strong> {tareaSeleccionada.descripcion}</p>
-              )}
-              {tareaSeleccionada.fechaVencimiento && (
-                <p><strong>Fecha límite:</strong> {new Date(tareaSeleccionada.fechaVencimiento).toLocaleDateString()}</p>
-              )}
-              {tareaSeleccionada.nota && (
-                <p><strong>Nota:</strong> {tareaSeleccionada.nota}</p>
-              )}
-            </div>
-
+            <br />
+           
             {/* Lista de subtareas */}
             <ul className="mb-6 overflow-auto flex-grow space-y-3">
               {tareaSeleccionada.subtareas?.length === 0 && (
@@ -581,7 +556,7 @@ export default function Dashboard({ usuario, onLogout }) {
                   <button
                     onClick={() => eliminarSubtarea(subtarea.id)}
                     aria-label="Eliminar subtarea"
-                    className="text-gray-400 ml-3 focus:outline-none hover:text-red-600"
+                    className="text-gray-400 ml-3 focus:outline-none"
                   >
                     ✕
                   </button>
@@ -616,7 +591,7 @@ export default function Dashboard({ usuario, onLogout }) {
               <button
                 onClick={() => eliminarTarea(tareaSeleccionada.id)}
                 aria-label="Eliminar tarea"
-                className="text-gray-400 ml-3 focus:outline-none hover:text-red-600"
+                className="text-gray-400 ml-3 focus:outline-none"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
