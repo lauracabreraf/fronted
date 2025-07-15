@@ -1,5 +1,5 @@
 const BASE_URL = 'http://localhost:3000/auth';
-import axios from './axiosInstance';
+
 
 export async function login(email, password) {
   const resp = await fetch(`${BASE_URL}/login`, {
@@ -28,5 +28,5 @@ export async function registrar(email, password) {
     throw new Error(data.message || 'Error en registro');
   }
 
-  return resp.json(); // opcional, depende si backend retorna algo útil
+  return resp.json(); 
 }

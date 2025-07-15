@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import Login from './Pages/Login.jsx';
-import Dashboard from './Pages/Dashboard.jsx';
+import Login from './Paginas/Login.jsx';
+import Dashboard from './Paginas/Dashboard.jsx';
 
 export default function App() {
   const [logueado, setLogueado] = useState(false);

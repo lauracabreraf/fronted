@@ -1,4 +1,4 @@
-import { login, registrar } from '../Service/autenticacionService';
+import { login, registrar } from '../Servicios/autenticacionService';
 import { useState } from 'react';
 
 export default function Login({ onLoginSuccess }) {
