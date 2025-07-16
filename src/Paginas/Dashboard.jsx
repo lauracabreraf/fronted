@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
+import Subtareas from '../Paginas/Subtareas';
+import Listas from '../Paginas/Listas';
+
 
 export default function Dashboard({ usuario, onLogout }) {
    
@@ -8,8 +11,6 @@ export default function Dashboard({ usuario, onLogout }) {
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   const [mostrarMenuUsuario, setMostrarMenuUsuario] = useState(false);
   const [mostrarModalTarea, setMostrarModalTarea] = useState(false);
-  
-
 
 
   // Variables para el modal de crear tarea
@@ -21,6 +22,8 @@ export default function Dashboard({ usuario, onLogout }) {
   const [nota, setNota] = useState('');
   const [fechaVencimiento, setFechaVencimiento] = useState(''); 
   const [usuarioId, setUsuarioId] = useState('1'); 
+  const [listaId, setlistaId] = useState('1');
+
 
 
 
@@ -39,7 +42,7 @@ export default function Dashboard({ usuario, onLogout }) {
     setUsuarioId(tareaSeleccionada.usuarioId || '');
     setMostrarModalTarea(true);
   }
-}, [tareaSeleccionada]);
+ }, [tareaSeleccionada]);
 
 
 
@@ -193,12 +196,12 @@ export default function Dashboard({ usuario, onLogout }) {
   } catch (error) {
     console.error('Error al actualizar tarea:', error);
   }
-};
+ };
 
 
 
 
-const eliminarTarea = async () => {
+ const eliminarTarea = async () => {
   if (!tareaSeleccionada) return;
 
   const confirmar = window.confirm('¿Estás segura de que deseas eliminar esta tarea?');
@@ -223,7 +226,7 @@ const eliminarTarea = async () => {
   } catch (error) {
     console.error('Error al eliminar tarea:', error);
   }
-};
+ };
 
 
 
@@ -296,7 +299,7 @@ const eliminarTarea = async () => {
     } catch (error) {
       console.error('Error al marcar como favorita:', error);
     }
-  };
+   };
 
  
   
@@ -307,7 +310,7 @@ const eliminarTarea = async () => {
 
     {/* FORMULARIO MODAL - CREAR TAREA*/}
 
-  return (
+   return (
     
     <div className="flex h-screen bg-gray-50">
   
@@ -327,14 +330,24 @@ const eliminarTarea = async () => {
 
           </button>
 
+          
+
+
 
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-20 relative">
+
+            
+          {tareaSeleccionada && (
+    <Subtareas tareaId={tareaSeleccionada.id} />
+     )}
 
            <h2 className="text-lg font-bold text-blue-900 mb-4">
 
           {tareaSeleccionada ? 'Editar tarea' : 'Crear nueva tarea'}
         
           </h2>
+
+
 
             
 
@@ -390,14 +403,28 @@ const eliminarTarea = async () => {
                 onChange={e => setUsuarioId(e.target.value)}
                 className="w-full border border-gray-300 p-2 rounded"
                 > 
+
              <option value="">Seleccionar usuario...</option>
 
-  {usuarios.map(usuario => (
-    <option key={usuario.id} value={usuario.id}>
-      {usuario.username}
-    </option>
-  ))}
-</select>
+           {usuarios.map(usuario => (
+           <option key={usuario.id} value={usuario.id}>
+           {usuario.username}
+           </option>
+            ))}
+        </select>
+
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Listas
+                </label>
+
+
+
+        <select  className="w-full border border-gray-300 p-2 rounded"> 
+          
+          
+             <option value=""></option>
+             
+       </select>
 
 
 
@@ -408,16 +435,21 @@ const eliminarTarea = async () => {
              
 
               <div className="flex justify-between items-center mt-6">
-  {tareaSeleccionada && (
-    <button
-      onClick={eliminarTarea}
-      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-    >
-      Eliminar
-    </button>
-  )}
+               {tareaSeleccionada && ( 
+
+              <button onClick={eliminarTarea}
+               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+             >
+               Eliminar
+               </button>
+
+               
+               )} 
+
+
 
   <div className="flex space-x-2">
+
     <button
       className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
       onClick={() => {
@@ -428,6 +460,9 @@ const eliminarTarea = async () => {
     >
       Cancelar
     </button>
+  
+
+
 
     <button
       className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded"
@@ -435,8 +470,11 @@ const eliminarTarea = async () => {
     >
       {tareaSeleccionada ? 'Guardar cambios' : 'Crear'}
     </button>
+
+
+
   </div>
-</div>
+ </div>
 
 
  
@@ -607,4 +645,5 @@ const eliminarTarea = async () => {
 
 
   );
+  
 }
