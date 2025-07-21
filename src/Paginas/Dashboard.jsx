@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
 import Subtareas from '../Paginas/Subtareas';
-import Listas from '../Paginas/Listas';
+
 
 
 export default function Dashboard({ usuario, onLogout }) {
@@ -327,6 +327,9 @@ export default function Dashboard({ usuario, onLogout }) {
   
 
 
+   
+
+
 
 
 
@@ -338,7 +341,9 @@ export default function Dashboard({ usuario, onLogout }) {
   
       {mostrarModalTarea && (
 
-        <div>
+        <div className="absolute top-0 right-0 h-full w-[350px] bg-white shadow-lg z-30 overflow-auto border-l border-gray-200">
+
+
 
 
           <button className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl"
@@ -356,7 +361,7 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
 
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-20 relative">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
 
             
           {tareaSeleccionada && (
@@ -365,7 +370,7 @@ export default function Dashboard({ usuario, onLogout }) {
 
            <h2 className="text-lg font-bold text-blue-900 mb-4">
 
-          {tareaSeleccionada ? 'Editar tarea' : 'Crear nueva tarea'}
+          {tareaSeleccionada ? 'Editar tarea' : 'Crear tarea'}
         
           </h2>
 
@@ -415,25 +420,7 @@ export default function Dashboard({ usuario, onLogout }) {
               />
 
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Asignar a Usuario
-                </label>
-
-                <select
-                value={usuarioId}
-                onChange={e => setUsuarioId(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded"
-                > 
-
-             <option value="">Seleccionar usuario...</option>
-
-           {usuarios.map(usuario => (
-           <option key={usuario.id} value={usuario.id}>
-           {usuario.username}
-           </option>
-            ))}
-        </select>
+            
 
        
 
@@ -459,39 +446,24 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
 
-  <div className="flex space-x-2">
-
-    <button
-      className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
-      onClick={() => {
-        setMostrarModalTarea(false);
-        setTareaSeleccionada(null);
-        limpiarFormulario();
-      }}
-    >
-      Cancelar
-    </button>
-  
+<div className="flex justify-end mt-4">
+  <button
+    className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded"
+    onClick={tareaSeleccionada ? actualizarTarea : agregarTarea}
+  >
+    {tareaSeleccionada ? 'Guardar cambios' : 'Crear'}
+  </button>
+</div>
 
 
 
-    <button
-      className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded"
-      onClick={tareaSeleccionada ? actualizarTarea : agregarTarea}
-    >
-      {tareaSeleccionada ? 'Guardar cambios' : 'Crear'}
-    </button>
-
-
-
-  </div>
  </div>
 
 
  
             </div>
           </div>
-        </div>
+  
 
        
       )}
@@ -503,7 +475,8 @@ export default function Dashboard({ usuario, onLogout }) {
 
         {/* PANEL IZQUIERDO*/}
 
-      <section className="w-full border-r border-amber-50 p-6 overflow-auto">
+      <section className={`transition-all duration-300 p-6 overflow-auto border-r border-amber-50 ${mostrarModalTarea ? 'w-[calc(100%-350px)]' : 'w-full'}`}>
+
     
         <div className="relative ml-auto mb-4 flex justify-end">
 
@@ -557,17 +530,18 @@ export default function Dashboard({ usuario, onLogout }) {
 
         <h1 className="text-2xl font-bold mb-6 text-blue-900">Todo List</h1>
      
-        <div className="flex mb-6">
+        <div className="w-full flex justify-end mb-4">
 
 
           
-          <input
-            type="text"
-            placeholder="+ Nueva"
-            className="flex-grow p-2 focus:outline-none placeholder-gray-400 bg-transparent border-none cursor-pointer"
-            onClick={() => setMostrarModalTarea(true)}
-            readOnly
-          />
+         <input
+  type="text"
+  placeholder="+ Nueva"
+  className="white px-4 py-2 rounded focus:outline-none placeholder-gray-400 bg-transparent border-none cursor-pointer"
+  onClick={() => setMostrarModalTarea(prev => !prev)}
+  readOnly
+/>
+
 
       
          
@@ -652,7 +626,6 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
     </div>
-
 
 
   );
