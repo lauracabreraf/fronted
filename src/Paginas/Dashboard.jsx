@@ -23,6 +23,8 @@ export default function Dashboard({ usuario, onLogout }) {
   const [fechaVencimiento, setFechaVencimiento] = useState(''); 
   const [usuarioId, setUsuarioId] = useState('1'); 
   const [listaId, setlistaId] = useState('1');
+  
+
 
 
 
@@ -64,6 +66,11 @@ export default function Dashboard({ usuario, onLogout }) {
       }
     };
 
+
+
+
+
+    
 
 
 
@@ -112,7 +119,22 @@ export default function Dashboard({ usuario, onLogout }) {
     setUsuarioId('1');
   };
 
+
+
+
+
+
+
+
+
+
+
+
+
   
+  
+
+
   
 
   
@@ -413,18 +435,7 @@ export default function Dashboard({ usuario, onLogout }) {
             ))}
         </select>
 
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Listas
-                </label>
-
-
-
-        <select  className="w-full border border-gray-300 p-2 rounded"> 
-          
-          
-             <option value=""></option>
-             
-       </select>
+       
 
 
 

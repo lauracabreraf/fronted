@@ -1,54 +1,76 @@
 import { useEffect, useState } from 'react';
 
-export default function listas() {
+
+
+export default function Listas({ listaId, setListaId }) {
+
+
   const [listas, setListas] = useState([]);
-  const [nombre, setNombre] = useState('');
+  const [nuevaLista, setNuevaLista] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [listaSeleccionada, setListaSeleccionada] = useState(null);
-  const [mostrarModal, setMostrarModal] = useState(false);
+  const [usuarios, setUsuarios] = useState([]);
+  const [usuariosSeleccionados, setUsuariosSeleccionados] = useState([]);
+
+  const [editandoId, setEditandoId] = useState(null);
+  const [textoEditado, setTextoEditado] = useState('');
+
+  const token = localStorage.getItem('token');
+  const usuario = JSON.parse(localStorage.getItem('usuario'));
 
   useEffect(() => {
     cargarListas();
+    cargarUsuarios();
   }, []);
+
+
+
 
   const cargarListas = async () => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:3000/listas', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
-      setListas(Array.isArray(data) ? data : []);
+      Array.isArray(data) ? setListas(data) : setListas([]);
     } catch (error) {
       console.error('Error al cargar listas:', error);
     }
   };
 
-  const limpiarFormulario = () => {
-    setNombre('');
-    setDescripcion('');
-    setListaSeleccionada(null);
+
+
+
+    const cargarUsuarios = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/users/Listar', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      setUsuarios(data);
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error);
+    }
   };
 
-  const abrirModalNueva = () => {
-    limpiarFormulario();
-    setMostrarModal(true);
-  };
 
-  const guardarLista = async () => {
-    if (!nombre.trim()) return;
-    const token = localStorage.getItem('token');
-    const body = { nombre, descripcion };
-
-    const url = listaSeleccionada
-      ? `http://localhost:3000/listas/${listaSeleccionada.id}`  // CORREGIDO
-      : 'http://localhost:3000/listas';                         // CORREGIDO
-
-    const metodo = listaSeleccionada ? 'PUT' : 'POST';
+  
+ const crearLista = async () => {
+    if (!nuevaLista.trim()) return;
+    if (!usuario || !usuario.id) {
+      console.error('Usuario no disponible');
+      return;
+    }
 
     try {
-      const response = await fetch(url, {
-        method: metodo,
+      const body = {
+        name: nuevaLista,
+        description: descripcion || null,
+        usuarioId: usuario.id,
+        usuariosCompartidos: usuariosSeleccionados,
+      };
+
+      const response = await fetch('http://localhost:3000/listas', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -56,121 +78,172 @@ export default function listas() {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
-      await cargarListas();
-      setMostrarModal(false);
-      limpiarFormulario();
+      if (!response.ok) throw new Error('Error al crear lista');
+
+      setNuevaLista('');
+      setDescripcion('');
+      setUsuariosSeleccionados([]);
+      cargarListas();
     } catch (error) {
-      console.error('Error al guardar lista:', error);
+      console.error('Error al agregar lista:', error);
     }
   };
+
+
+
+
+
+
 
   const eliminarLista = async (id) => {
     const confirmar = window.confirm('¿Deseas eliminar esta lista?');
     if (!confirmar) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/listas/${id}`, {  // CORREGIDO
+      const response = await fetch(`http://localhost:3000/listas/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error('Error al eliminar');
-
-      await cargarListas();
+      if (!response.ok) throw new Error('Error al eliminar lista');
+      cargarListas();
     } catch (error) {
       console.error('Error al eliminar lista:', error);
     }
   };
 
-  const editarLista = (lista) => {
-    setNombre(lista.nombre);
-    setDescripcion(lista.descripcion || '');
-    setListaSeleccionada(lista);
-    setMostrarModal(true);
+
+
+
+
+
+
+  const guardarEdicion = async (id) => {
+    if (!textoEditado.trim()) return;
+
+    try {
+      const body = { name: textoEditado };
+      const response = await fetch(`http://localhost:3000/listas/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) throw new Error('Error al actualizar lista');
+      setEditandoId(null);
+      setTextoEditado('');
+      cargarListas();
+    } catch (error) {
+      console.error('Error al guardar edición de lista:', error);
+    }
   };
+
+
+
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4 text-blue-900">Listas</h1>
 
-      <button
-        onClick={abrirModalNueva}
-        className="mb-4 px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
-      >
-        + Nueva lista
-      </button>
+     <div className="flex flex-col gap-2 mb-4">
+        <input
+          type="text"
+          value={nuevaLista}
+          onChange={(e) => setNuevaLista(e.target.value)}
+          placeholder="Nueva lista"
+          className="flex-grow p-2 border border-gray-300 rounded"
+        />
 
-      <ul className="space-y-3">
+    
+
+ <input
+  type="text"
+  value={descripcion}
+  onChange={(e) => setDescripcion(e.target.value)}
+  placeholder="Descripción"
+  className="flex-grow p-2 border border-gray-300 rounded"
+ />
+
+
+
+
+
+        <button
+          onClick={crearLista}
+          className="bg-blue-900 text-white px-4 py-2 rounded hover:bg-blue-800"
+        >
+          Agregar
+        </button>
+      </div>
+
+
+
+
+
+
+
+
+      <ul className="space-y-2">
         {listas.map((lista) => (
           <li
             key={lista.id}
-            className="bg-white p-4 rounded shadow flex justify-between items-center"
+            className="flex items-center justify-between bg-gray-50 p-2 rounded shadow-sm"
           >
-            <div>
-              <h3 className="font-bold text-blue-900">{lista.nombre}</h3>
-              {lista.descripcion && <p className="text-gray-600">{lista.descripcion}</p>}
+            <div className="flex items-center space-x-2 flex-grow">
+             
+
+              {editandoId === lista.id ? (
+                <input 
+                  type="text"
+                  value={textoEditado}
+                  onChange={(e) => setTextoEditado(e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 w-full"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') guardarEdicion(lista.id);
+                    if (e.key === 'Escape') {
+                      setEditandoId(null);
+                      setTextoEditado('');
+                    }
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <span
+                  className="cursor-pointer flex-grow text-blue-900"
+                  onClick={() => {
+                    setEditandoId(lista.id);
+                    setTextoEditado(lista.nombre);
+                  }}
+                >
+                  {lista.nombre}
+                </span>
+              )}
             </div>
+
             <div className="flex space-x-2">
-              <button
-                onClick={() => editarLista(lista)}
-                className="text-blue-600 hover:text-blue-800"
-              >
-                Editar
-              </button>
+              {editandoId === lista.id && (
+                <button
+                  onClick={() => guardarEdicion(lista.id)}
+                  className="text-green-600 hover:text-green-800 text-sm font-bold"
+                >
+                  ✔
+                </button>
+              )}
               <button
                 onClick={() => eliminarLista(lista.id)}
-                className="text-red-600 hover:text-red-800"
+                className="text-black"
+                title="Eliminar"
               >
-                Eliminar
+                x
               </button>
             </div>
           </li>
         ))}
       </ul>
-
-      {mostrarModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4 text-blue-900">
-              {listaSeleccionada ? 'Editar lista' : 'Crear lista'}
-            </h2>
-
-            <input
-              type="text"
-              placeholder="Nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="w-full mb-3 border border-gray-300 p-2 rounded"
-            />
-            <textarea
-              placeholder="Descripción"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              className="w-full mb-3 border border-gray-300 p-2 rounded"
-            ></textarea>
-
-            <div className="flex justify-between">
-              <button
-                onClick={() => {
-                  setMostrarModal(false);
-                  limpiarFormulario();
-                }}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={guardarLista}
-                className="px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
-              >
-                {listaSeleccionada ? 'Guardar cambios' : 'Crear'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
