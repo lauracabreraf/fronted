@@ -11,13 +11,16 @@ export default function Dashboard({ usuario, onLogout }) {
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   const [mostrarMenuUsuario, setMostrarMenuUsuario] = useState(false);
   const [mostrarModalTarea, setMostrarModalTarea] = useState(false);
+  const [mostrarPanelIzquierdo, setMostrarPanelIzquierdo] = useState(false);
+  const [modoImportante, setModoImportante] = useState(false);
+
 
 
   // Variables para el modal de crear tarea
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [estado, setEstado] = useState('pendiente');
-  const [favorito, setFavorito] = useState(false);
+  const [, setFavorito] = useState(false);
   const [realizada, setRealizada] = useState(false);
   const [nota, setNota] = useState('');
   const [fechaVencimiento, setFechaVencimiento] = useState(''); 
@@ -338,6 +341,8 @@ export default function Dashboard({ usuario, onLogout }) {
    return (
     
     <div className="flex h-screen bg-gray-50">
+
+      
   
       {mostrarModalTarea && (
 
@@ -420,13 +425,7 @@ export default function Dashboard({ usuario, onLogout }) {
               />
 
               
-            
-
-       
-
-
-
-
+          
               </div>
 
              
@@ -469,6 +468,67 @@ export default function Dashboard({ usuario, onLogout }) {
       )}
 
 
+
+
+
+<button
+  className="absolute top-4 left-4 text-blue-900 text-3xl z-40 focus:outline-none"
+ onClick={() => setMostrarPanelIzquierdo(prev => !prev)}
+
+>
+  &#9776; {/* Esto es ☰ */}
+</button> 
+
+
+
+
+
+{/* PANEL IZQUIERDO */}
+{mostrarPanelIzquierdo && (
+  <div className="h-full w-[250px] bg-white shadow-lg z-30 overflow-auto border-r border-gray-200 transition-transform duration-300">
+    <button
+      className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl"
+      onClick={() => setMostrarPanelIzquierdo(false)}
+    >
+      &times;
+    </button>
+
+    <h2 className="text-lg font-bold text-blue-900 mb-6 px-4 mt-12">MENU</h2>
+
+    <ul className="space-y-4 px-4">
+    <li>
+  <button
+    onClick={() => {
+      setModoImportante(false);
+      setMostrarPanelIzquierdo(false);
+    }}
+    className="text-blue-900 font-semibold hover:underline"
+  >
+    Mis tareas
+  </button>
+</li>
+
+     <li>
+  <button
+    onClick={() => {
+      setModoImportante(true);
+      setMostrarPanelIzquierdo(false);
+    }}
+    className="text-blue-900 font-semibold hover:underline"
+  >
+    Importante
+  </button>
+</li>
+
+     <li>
+      Crear lista
+     </li>
+     <li>
+      Mis listas
+     </li>
+    </ul>
+  </div>
+)}
 
 
 
@@ -528,7 +588,7 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
 
-        <h1 className="text-2xl font-bold mb-6 text-blue-900">Todo List</h1>
+       
      
         <div className="w-full flex justify-end mb-4">
 
@@ -550,7 +610,8 @@ export default function Dashboard({ usuario, onLogout }) {
      
 
         <ul className="space-y-3">
-          {tareas.map(tarea => (
+          {(modoImportante ? tareas.filter(t => t.favorita) : tareas).map(tarea => (
+
             <li
               key={tarea.id}
               className="cursor-pointer bg-white p-4 rounded shadow flex justify-between items-center hover:bg-blue-50"
