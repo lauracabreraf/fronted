@@ -20,7 +20,7 @@ export default function Dashboard({ usuario, onLogout }) {
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [estado, setEstado] = useState('pendiente');
-  const [, setFavorito] = useState(false);
+  const [favorito, setFavorito] = useState(false);
   const [realizada, setRealizada] = useState(false);
   const [nota, setNota] = useState('');
   const [fechaVencimiento, setFechaVencimiento] = useState(''); 
@@ -45,6 +45,7 @@ export default function Dashboard({ usuario, onLogout }) {
     setNota(tareaSeleccionada.nota || '');
     setFechaVencimiento(tareaSeleccionada.fechaVencimiento?.substring(0, 10) || '');
     setUsuarioId(tareaSeleccionada.usuarioId || '');
+    setFavorito(tareaSeleccionada.favorito || false);
     setMostrarModalTarea(true);
   }
  }, [tareaSeleccionada]);
@@ -153,8 +154,8 @@ export default function Dashboard({ usuario, onLogout }) {
         titulo: titulo,
         descripcion: descripcion,
         estado: estado,
-        favorito: false, 
-        realizada: false, 
+        favorito,
+        realizada, 
         nota: nota,
         fechaVencimiento: fechaVencimiento,
         usuarioId: usuarioId
@@ -176,6 +177,11 @@ export default function Dashboard({ usuario, onLogout }) {
 
       const tareaCreada = await response.json();
       setTareas([tareaCreada, ...tareas]);
+
+      if (tareaCreada.favorito && setTareasImportantes) {
+  setTareasImportantes(prev => [tareaCreada, ...prev]);
+}
+
       limpiarFormulario();
       setMostrarModalTarea(false);
     } catch (error) {
@@ -301,7 +307,7 @@ export default function Dashboard({ usuario, onLogout }) {
     try {
       const token = localStorage.getItem('token');
       const body = {
-        favorita: !tarea.favorita,
+        favorito: !tarea.favorito,
       };
 
       const response = await fetch(`http://localhost:3000/tarea/${id}`, {
@@ -610,7 +616,7 @@ export default function Dashboard({ usuario, onLogout }) {
      
 
         <ul className="space-y-3">
-          {(modoImportante ? tareas.filter(t => t.favorita) : tareas).map(tarea => (
+          {(modoImportante ? tareas.filter(t => t.favorito) : tareas).map(tarea => (
 
             <li
               key={tarea.id}
@@ -642,11 +648,11 @@ export default function Dashboard({ usuario, onLogout }) {
                   e.stopPropagation();
                   toggleFavorita(tarea.id);
                 }}
-                aria-label={tarea.favorita ? 'Quitar de favoritas' : 'Marcar como favorita'}
+                aria-label={tarea.favorito ? 'Quitar de favoritas' : 'Marcar como favorita'}
                 className="focus:outline-none ml-3"
               >
 
-                {tarea.favorita ? (
+                {tarea.favorito ? (
 
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
