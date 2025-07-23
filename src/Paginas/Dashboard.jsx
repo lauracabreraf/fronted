@@ -16,7 +16,6 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
 
-  // Variables para el modal de crear tarea
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [estado, setEstado] = useState('pendiente');
@@ -26,15 +25,34 @@ export default function Dashboard({ usuario, onLogout }) {
   const [fechaVencimiento, setFechaVencimiento] = useState(''); 
   const [usuarioId, setUsuarioId] = useState('1'); 
   const [listaId, setlistaId] = useState('1');
+
+  const user = localStorage.getItem('usuario')
+  const wipeUser = JSON.parse(user) 
+
+
   
 
 
+  
+   const [mostrarFormularioLista, setMostrarFormularioLista] = useState(false);
+   const [nombreLista, setNombreLista] = useState('');
+   const [descripcionLista, setDescripcionLista] = useState('');
+
+   const [listas, setListas] = useState([]);
+   const [listaSeleccionada, setListaSeleccionada] = useState(null);
+
+   const [listaEditando, setListaEditando] = useState(null);
+   const [nuevaDescripcionLista, setNuevaDescripcionLista] = useState('');
 
 
 
-  const user = localStorage.getItem('usuario')
 
-  const wipeUser = JSON.parse(user) 
+
+
+
+
+
+
 
 
   useEffect(() => {
@@ -47,8 +65,52 @@ export default function Dashboard({ usuario, onLogout }) {
     setUsuarioId(tareaSeleccionada.usuarioId || '');
     setFavorito(tareaSeleccionada.favorito || false);
     setMostrarModalTarea(true);
+
+    
   }
  }, [tareaSeleccionada]);
+
+
+
+
+
+
+
+ const cargarListas = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/listas', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    Array.isArray(data) ? setListas(data) : setListas([]);
+  } catch (error) {
+    console.error('Error al cargar listas:', error);
+  }
+};
+
+
+<div className="mt-4">
+  <h2 className="text-lg font-bold mb-2">Mis listas:</h2>
+  <ul>
+    {listas.map((lista) => (
+      <li key={lista.id} className="p-2 border-b">
+        {lista.name}
+      </li>
+    ))}
+  </ul>
+</div>
+
+
+
+
+
+
+
+    
 
 
 
@@ -57,10 +119,12 @@ export default function Dashboard({ usuario, onLogout }) {
     const cargarTareas = async () => {
       try {
         const token = localStorage.getItem('token'); 
-        const response = await fetch('http://localhost:3000/tarea/listar/all', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const url = listaSeleccionada
+  ? `http://localhost:3000/tarea/listar/por-lista/${listaSeleccionada.id}`
+  : 'http://localhost:3000/tarea/listar/all';
+
+const response = await fetch(url, {
+
         });
         const data = await response.json();
        
@@ -73,11 +137,7 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
 
-
-    
-
-
-
+   
     
     
     const cargarUsuarios = async () => {
@@ -104,6 +164,7 @@ export default function Dashboard({ usuario, onLogout }) {
 
     cargarTareas();
     cargarUsuarios();
+    cargarListas();
   }, []);
 
 
@@ -111,6 +172,7 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
  
+
   
   const limpiarFormulario = () => {
     setTitulo('');
@@ -130,17 +192,6 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
 
-
-
-
-
-
-  
-  
-
-
-  
-
   
   const agregarTarea = async () => {
     console.log('l')
@@ -158,7 +209,8 @@ export default function Dashboard({ usuario, onLogout }) {
         realizada, 
         nota: nota,
         fechaVencimiento: fechaVencimiento,
-        usuarioId: usuarioId
+        usuarioId: usuarioId,
+        listaId: listaSeleccionada?.id
       };
        console.log('nueva tarea', nuevaTarea) 
 
@@ -188,6 +240,10 @@ export default function Dashboard({ usuario, onLogout }) {
       console.error('Error al agregar tarea:', error);
     }
   };
+
+
+
+
 
 
 
@@ -232,6 +288,12 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
 
+
+
+
+
+
+
  const eliminarTarea = async () => {
   if (!tareaSeleccionada) return;
 
@@ -258,6 +320,10 @@ export default function Dashboard({ usuario, onLogout }) {
     console.error('Error al eliminar tarea:', error);
   }
  };
+
+
+
+
 
 
 
@@ -299,6 +365,8 @@ export default function Dashboard({ usuario, onLogout }) {
 
 
 
+
+
   
   const toggleFavorita = async (id) => {
     const tarea = tareas.find(t => t.id === id);
@@ -333,29 +401,74 @@ export default function Dashboard({ usuario, onLogout }) {
    };
 
  
-  
+
+
+
+
+
+   const eliminarLista = async (id) => {
+  const confirmar = window.confirm('¿Estás segura de eliminar esta lista?');
+  if (!confirmar) return;
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://localhost:3000/listas/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) throw new Error('Error al eliminar lista');
+
+    await cargarListas();
+  } catch (error) {
+    console.error('Error al eliminar lista:', error);
+  }
+};
+
+
+
+const actualizarLista = async () => {
+  if (!listaEditando?.id || !nombreLista.trim()) return;
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://localhost:3000/listas/${listaEditando.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: nombreLista,
+        description: nuevaDescripcionLista,
+      }),
+    });
+
+    if (!response.ok) throw new Error('Error al actualizar lista');
+
+    setListaEditando(null);
+    setNombreLista('');
+    setNuevaDescripcionLista('');
+    await cargarListas();
+  } catch (error) {
+    console.error('Error al actualizar lista:', error);
+  }
+};
+
 
 
    
 
 
 
-
-
     {/* FORMULARIO MODAL - CREAR TAREA*/}
 
    return (
-    
     <div className="flex h-screen bg-gray-50">
-
-      
-  
       {mostrarModalTarea && (
-
         <div className="absolute top-0 right-0 h-full w-[350px] bg-white shadow-lg z-30 overflow-auto border-l border-gray-200">
-
-
-
 
           <button className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl"
            onClick={() => {
@@ -368,13 +481,8 @@ export default function Dashboard({ usuario, onLogout }) {
 
           </button>
 
-          
-
-
-
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
 
-            
           {tareaSeleccionada && (
     <Subtareas tareaId={tareaSeleccionada.id} />
      )}
@@ -384,10 +492,6 @@ export default function Dashboard({ usuario, onLogout }) {
           {tareaSeleccionada ? 'Editar tarea' : 'Crear tarea'}
         
           </h2>
-
-
-
-            
 
             <div className="space-y-4">
               <input
@@ -430,12 +534,7 @@ export default function Dashboard({ usuario, onLogout }) {
                 className="w-full border border-gray-300 p-2 rounded"
               />
 
-              
-          
               </div>
-
-             
-             
 
               <div className="flex justify-between items-center mt-6">
                {tareaSeleccionada && ( 
@@ -446,12 +545,10 @@ export default function Dashboard({ usuario, onLogout }) {
                Eliminar
                </button>
 
-               
                )} 
 
-
-
 <div className="flex justify-end mt-4">
+  
   <button
     className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded"
     onClick={tareaSeleccionada ? actualizarTarea : agregarTarea}
@@ -460,22 +557,12 @@ export default function Dashboard({ usuario, onLogout }) {
   </button>
 </div>
 
-
-
  </div>
 
-
- 
             </div>
           </div>
-  
 
-       
       )}
-
-
-
-
 
 <button
   className="absolute top-4 left-4 text-blue-900 text-3xl z-40 focus:outline-none"
@@ -484,6 +571,13 @@ export default function Dashboard({ usuario, onLogout }) {
 >
   &#9776; {/* Esto es ☰ */}
 </button> 
+
+
+
+
+
+
+
 
 
 
@@ -514,6 +608,9 @@ export default function Dashboard({ usuario, onLogout }) {
   </button>
 </li>
 
+
+
+
      <li>
   <button
     onClick={() => {
@@ -526,20 +623,188 @@ export default function Dashboard({ usuario, onLogout }) {
   </button>
 </li>
 
-     <li>
-      Crear lista
-     </li>
-     <li>
-      Mis listas
-     </li>
+
+
+
+<li>
+  <button
+    onClick={() => {
+      setMostrarFormularioLista(prev => !prev); 
+    }}
+    className="text-blue-900 font-semibold hover:underline"
+  >
+    Crear Listas
+  </button>
+</li>
+
+
+
     </ul>
+
+
+    {mostrarFormularioLista && (
+
+  <form
+    onSubmit={async (e) => {
+      e.preventDefault();
+
+      const token = localStorage.getItem('token');
+      try {
+        const response = await fetch('http://localhost:3000/listas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: nombreLista,
+            description: descripcionLista,
+            usuarioId: wipeUser?.id, 
+          }),
+        });
+
+        if (!response.ok) throw new Error('Error al crear lista');
+
+        const nuevaLista = await response.json();
+        
+        setNombreLista('');
+        setDescripcionLista('');
+        setMostrarFormularioLista(false);
+
+        await cargarListas();
+      } catch (error) {
+        console.error('Error al crear lista:', error);
+      }
+    }}
+    className="space-y-2 mt-4"
+  >
+    <input
+      type="text"
+      placeholder="Nombre de la lista"
+      value={nombreLista}
+      onChange={(e) => setNombreLista(e.target.value)}
+      className="w-full border border-gray-300 p-2 rounded text-sm"
+      required
+    />
+    <input
+      type="text"
+      placeholder="Descripción (opcional)"
+      value={descripcionLista}
+      onChange={(e) => setDescripcionLista(e.target.value)}
+      className="w-full border border-gray-300 p-2 rounded text-sm"
+    />
+
+    <button
+      type="submit"
+      className="w-full bg-blue-900 hover:bg-blue-800 text-white py-1 rounded text-sm"
+    >
+      Guardar lista
+    </button>
+  </form>
+
+
+
+
+
+
+
+)}
+
+{/* Mostrar todas las listas debajo del formulario */}
+<ul className="list-none space-y-2">
+  {listas.map((lista) => (
+    <li
+      key={lista.id}
+      className="bg-white p-3 rounded shadow relative group hover:bg-gray-100"
+    >
+      {listaEditando?.id === lista.id ? (
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={nombreLista}
+            onChange={(e) => setNombreLista(e.target.value)}
+            placeholder="Nuevo nombre"
+            className="border p-1 w-full rounded text-sm"
+          />
+          <input
+            type="text"
+            value={nuevaDescripcionLista}
+            onChange={(e) => setNuevaDescripcionLista(e.target.value)}
+            placeholder="Nueva descripción"
+            className="border p-1 w-full rounded text-sm"
+          />
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={actualizarLista}
+              className="text-green-600 text-sm font-semibold"
+            >
+              Guardar
+            </button>
+            <button
+              onClick={() => setListaEditando(null)}
+              className="text-red-500 text-sm"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <span
+  className="cursor-pointer font-semibold text-blue-900 hover:underline"
+  onClick={() => {
+    setListaSeleccionada(lista);
+    setTareas([]); 
+    setMostrarModalTarea(false); 
+  }}
+>
+  {lista.name}
+</span>
+
+          <div className="absolute right-3 top-2 hidden group-hover:flex gap-2">
+            <button
+              onClick={() => {
+                setListaEditando(lista);
+                setNombreLista(lista.name);
+                setNuevaDescripcionLista(lista.description || '');
+              }}
+              className="text-blue-600 text-xs hover:text-blue-800"
+              title="Editar"
+            >
+              ✏️
+            </button>
+            <button
+              onClick={() => eliminarLista(lista.id)}
+              className="text-red-600 text-xs hover:text-red-800"
+              title="Eliminar"
+            >
+              ❌
+            </button>
+          </div>
+        </>
+      )}
+    </li>
+  ))}
+</ul>
+
+
+
+
+
+
+
+
   </div>
 )}
 
 
 
 
-        {/* PANEL IZQUIERDO*/}
+
+
+
+
+        {/* PANEL DERECHO*/}
 
       <section className={`transition-all duration-300 p-6 overflow-auto border-r border-amber-50 ${mostrarModalTarea ? 'w-[calc(100%-350px)]' : 'w-full'}`}>
 
@@ -601,21 +866,19 @@ export default function Dashboard({ usuario, onLogout }) {
 
           
          <input
-  type="text"
-  placeholder="+ Nueva"
-  className="white px-4 py-2 rounded focus:outline-none placeholder-gray-400 bg-transparent border-none cursor-pointer"
-  onClick={() => setMostrarModalTarea(prev => !prev)}
-  readOnly
+    type="text"
+    placeholder="+ Nueva"
+    className="white px-4 py-2 rounded focus:outline-none placeholder-gray-400 bg-transparent border-none cursor-pointer"
+    onClick={() => setMostrarModalTarea(prev => !prev)}
+    readOnly
 />
 
 
-      
-         
+
         </div>
-
-     
-
         <ul className="space-y-3">
+
+          
           {(modoImportante ? tareas.filter(t => t.favorito) : tareas).map(tarea => (
 
             <li
