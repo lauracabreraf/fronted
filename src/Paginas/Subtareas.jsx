@@ -16,7 +16,7 @@ export default function Subtareas({ tareaId }) {
     if (tareaId) {
       fetchSubtareas();
     }
-  }, [tareaId]);
+  }, [tareaId]); 
 
 
 
