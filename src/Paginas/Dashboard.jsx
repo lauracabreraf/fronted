@@ -47,6 +47,8 @@ export default function Dashboard({ usuario, onLogout }) {
       setUsuarioId(tareaSeleccionada.usuarioId || '');
       setFavorito(tareaSeleccionada.favorito || false);
       setMostrarModalTarea(true);
+      
+      
     }
   }, [tareaSeleccionada]);
 
@@ -144,7 +146,7 @@ export default function Dashboard({ usuario, onLogout }) {
         nota: nota,
         fechaVencimiento: fechaVencimiento,
         usuarioId: usuarioId,
-        listaId: listaId
+        listaId
 
       };
       console.log('nueva tarea', nuevaTarea) 
@@ -187,7 +189,8 @@ export default function Dashboard({ usuario, onLogout }) {
         estado,
         nota,
         fechaVencimiento,
-        usuarioId
+        usuarioId,
+        listaId 
       };
 
       const response = await fetch(`http://localhost:3000/tarea/${tareaSeleccionada.id}`, {
