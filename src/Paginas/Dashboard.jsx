@@ -11,6 +11,8 @@ export default function Dashboard({ usuario, onLogout }) {
   const [mostrarModalTarea, setMostrarModalTarea] = useState(false);
   const [mostrarPanelIzquierdo, setMostrarPanelIzquierdo] = useState(false);
   const [modoImportante, setModoImportante] = useState(false);
+  
+
 
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -21,6 +23,10 @@ export default function Dashboard({ usuario, onLogout }) {
   const [fechaVencimiento, setFechaVencimiento] = useState(''); 
   const [usuarioId, setUsuarioId] = useState('1'); 
   const [listaId, setlistaId] = useState('');
+
+    // Nuevos estados para el dashboard de listas
+  const [mostrarDashboardListas, setMostrarDashboardListas] = useState(false);
+  const [mostrarModalLista, setMostrarModalLista] = useState(false);
 
   const user = localStorage.getItem('usuario')
   const wipeUser = JSON.parse(user) 
@@ -33,9 +39,7 @@ export default function Dashboard({ usuario, onLogout }) {
   const [listaEditando, setListaEditando] = useState(null);
   const [nuevaDescripcionLista, setNuevaDescripcionLista] = useState('');
   
-  // Nuevos estados para el dashboard de listas
-  const [mostrarDashboardListas, setMostrarDashboardListas] = useState(false);
-  const [mostrarModalLista, setMostrarModalLista] = useState(false);
+
 
   useEffect(() => {
     if (tareaSeleccionada) {
@@ -103,16 +107,16 @@ export default function Dashboard({ usuario, onLogout }) {
     }
   };
 
-  // useEffect inicial para cargar datos por primera vez
+  
   useEffect(() => {
     cargarUsuarios();
     cargarListas();
   }, []);
 
-  // useEffect separado que se ejecuta cuando cambia listaSeleccionada
+
   useEffect(() => {
     cargarTareas();
-  }, [listaSeleccionada]); // Aquí está la clave - se ejecuta cuando cambia listaSeleccionada
+  }, [listaSeleccionada]); 
 
   const limpiarFormulario = () => {
     setTitulo('');
@@ -130,53 +134,63 @@ export default function Dashboard({ usuario, onLogout }) {
     setDescripcionLista('');
   };
 
-  const agregarTarea = async () => {
-    console.log('l')
-    if (!titulo.trim()) return;
 
-    try {
-      const token = localStorage.getItem('token');
 
-      const nuevaTarea = {
-        titulo: titulo,
-        descripcion: descripcion,
-        estado: estado,
-        favorito,
-        realizada, 
-        nota: nota,
-        fechaVencimiento: fechaVencimiento,
-        usuarioId: usuarioId,
-        listaId
+const agregarTarea = async () => {
+  if (!titulo.trim()) return;
 
-      };
-      console.log('nueva tarea', nuevaTarea) 
+  try {
+    const token = localStorage.getItem('token');
 
-      const response = await fetch('http://localhost:3000/tarea', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(nuevaTarea),
-      });
+    // Si no se selecciona un usuario, usar el usuarioId actual (de localStorage)
+    const tareaUsuarioId = usuarioId || wipeUser?.id;
 
-      if (!response.ok) {
-        throw new Error('Error al crear tarea');
-      }
+    const nuevaTarea = {
+      titulo: titulo,
+      descripcion: descripcion,
+      estado: estado,
+      favorito,
+      realizada,
+      nota: nota,
+      fechaVencimiento: fechaVencimiento,
+      usuarioId: tareaUsuarioId,  // Asegúrate de enviar el usuarioId correcto
+      ...(listaId && { listaId })  // Solo enviar listaId si está seleccionado
+    };
 
-      const tareaCreada = await response.json();
-      setTareas([tareaCreada, ...tareas]);
+    console.log('nueva tarea', nuevaTarea);
 
-      if (tareaCreada.favorito && setTareasImportantes) {
-        setTareasImportantes(prev => [tareaCreada, ...prev]);
-      }
+    const response = await fetch('http://localhost:3000/tarea', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(nuevaTarea),
+    });
 
-      limpiarFormulario();
-      setMostrarModalTarea(false);
-    } catch (error) {
-      console.error('Error al agregar tarea:', error);
+    if (!response.ok) {
+      throw new Error('Error al crear tarea');
     }
-  };
+
+    const tareaCreada = await response.json();
+    setTareas([tareaCreada, ...tareas]);
+
+    if (tareaCreada.favorito && setTareasImportantes) {
+      setTareasImportantes(prev => [tareaCreada, ...prev]);
+    }
+
+    limpiarFormulario();
+    setMostrarModalTarea(false);
+  } catch (error) {
+    console.error('Error al agregar tarea:', error);
+  }
+};
+
+
+
+
+
+
 
   const actualizarTarea = async () => {
     if (!titulo.trim() || !tareaSeleccionada) return;
@@ -215,6 +229,8 @@ export default function Dashboard({ usuario, onLogout }) {
     }
   };
 
+
+
   const eliminarTarea = async () => {
     if (!tareaSeleccionada) return;
 
@@ -240,6 +256,10 @@ export default function Dashboard({ usuario, onLogout }) {
       console.error('Error al eliminar tarea:', error);
     }
   };
+
+
+
+
 
   const toggleCompletadaTarea = async (id) => {
     const tarea = tareas.find(t => t.id === id);
@@ -305,39 +325,38 @@ export default function Dashboard({ usuario, onLogout }) {
     }
   };
 
-  // Funciones para manejar listas
+  
   const agregarLista = async () => {
-    if (!nombreLista.trim()) return;
+  if (!nombreLista.trim()) return;
 
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch('http://localhost:3000/listas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: nombreLista,
-          description: descripcionLista,
-          usuarioId,
-          ...(listaId && { listaId })
-, 
-        }),
-      });
+  const token = localStorage.getItem('token');
+  try {
+    const response = await fetch('http://localhost:3000/listas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: nombreLista,
+        description: descripcionLista,
+        ...(usuarioId && { usuarioId }), // Solo agregar usuarioId si existe
+      }),
+    });
 
-      if (!response.ok) throw new Error('Error al crear lista');
+    if (!response.ok) throw new Error('Error al crear lista');
 
-      const nuevaLista = await response.json();
-      setListas([nuevaLista, ...listas]);
-      
-      limpiarFormularioLista();
-      setMostrarModalLista(false);
-      await cargarListas();
-    } catch (error) {
-      console.error('Error al crear lista:', error);
-    }
-  };
+    const nuevaLista = await response.json();
+    setListas([nuevaLista, ...listas]);
+
+    limpiarFormularioLista();
+    setMostrarModalLista(false);
+    await cargarListas();
+  } catch (error) {
+    console.error('Error al crear lista:', error);
+  }
+};
+
 
   const actualizarLista = async () => {
     if (!listaEditando?.id || !nombreLista.trim()) return;
@@ -631,6 +650,7 @@ export default function Dashboard({ usuario, onLogout }) {
 <li>
   <button
     onClick={() => {
+      
       setMostrarDashboardListas(true);
       setModoImportante(false);
       setListaSeleccionada(null);
@@ -641,6 +661,8 @@ export default function Dashboard({ usuario, onLogout }) {
    Listas
   </button>
 </li>
+
+
     </ul>
   </div>
 )}
