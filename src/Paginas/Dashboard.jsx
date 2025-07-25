@@ -12,8 +12,6 @@ export default function Dashboard({ usuario, onLogout }) {
   const [mostrarPanelIzquierdo, setMostrarPanelIzquierdo] = useState(false);
   const [modoImportante, setModoImportante] = useState(false);
   
-
-
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [estado, setEstado] = useState('pendiente');
@@ -24,7 +22,7 @@ export default function Dashboard({ usuario, onLogout }) {
   const [usuarioId, setUsuarioId] = useState('1'); 
   const [listaId, setlistaId] = useState('');
 
-    // Nuevos estados para el dashboard de listas
+  // Nuevos estados para el dashboard de listas
   const [mostrarDashboardListas, setMostrarDashboardListas] = useState(false);
   const [mostrarModalLista, setMostrarModalLista] = useState(false);
 
@@ -38,8 +36,14 @@ export default function Dashboard({ usuario, onLogout }) {
   const [listaSeleccionada, setListaSeleccionada] = useState(null);
   const [listaEditando, setListaEditando] = useState(null);
   const [nuevaDescripcionLista, setNuevaDescripcionLista] = useState('');
-  
 
+  // Función para obtener el título actual
+  const obtenerTituloActual = () => {
+    if (mostrarDashboardListas) return 'Listas';
+    if (modoImportante) return 'Importante';
+    if (listaSeleccionada) return `Lista: ${listaSeleccionada.name}`;
+    return 'Tareas';
+  };
 
   useEffect(() => {
     if (tareaSeleccionada) {
@@ -51,8 +55,6 @@ export default function Dashboard({ usuario, onLogout }) {
       setUsuarioId(tareaSeleccionada.usuarioId || '');
       setFavorito(tareaSeleccionada.favorito || false);
       setMostrarModalTarea(true);
-      
-      
     }
   }, [tareaSeleccionada]);
 
@@ -107,12 +109,10 @@ export default function Dashboard({ usuario, onLogout }) {
     }
   };
 
-  
   useEffect(() => {
     cargarUsuarios();
     cargarListas();
   }, []);
-
 
   useEffect(() => {
     cargarTareas();
@@ -133,8 +133,6 @@ export default function Dashboard({ usuario, onLogout }) {
     setNombreLista('');
     setDescripcionLista('');
   };
-
-
 
 const agregarTarea = async () => {
   if (!titulo.trim()) return;
@@ -186,12 +184,6 @@ const agregarTarea = async () => {
   }
 };
 
-
-
-
-
-
-
   const actualizarTarea = async () => {
     if (!titulo.trim() || !tareaSeleccionada) return;
 
@@ -229,8 +221,6 @@ const agregarTarea = async () => {
     }
   };
 
-
-
   const eliminarTarea = async () => {
     if (!tareaSeleccionada) return;
 
@@ -256,10 +246,6 @@ const agregarTarea = async () => {
       console.error('Error al eliminar tarea:', error);
     }
   };
-
-
-
-
 
   const toggleCompletadaTarea = async (id) => {
     const tarea = tareas.find(t => t.id === id);
@@ -324,7 +310,6 @@ const agregarTarea = async () => {
       console.error('Error al marcar como favorita:', error);
     }
   };
-
   
   const agregarLista = async () => {
   if (!nombreLista.trim()) return;
@@ -356,7 +341,6 @@ const agregarTarea = async () => {
     console.error('Error al crear lista:', error);
   }
 };
-
 
   const actualizarLista = async () => {
     if (!listaEditando?.id || !nombreLista.trim()) return;
@@ -417,27 +401,28 @@ const agregarTarea = async () => {
     <div className="flex h-screen bg-gray-50">
       {/* MODAL TAREA */}
       {mostrarModalTarea && (
-        <div className="absolute top-0 right-0 h-full w-[350px] bg-white shadow-lg z-30 overflow-auto border-l border-gray-200">
-
-           
-          <button className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl"
-           onClick={() => {
-           setMostrarModalTarea(false);
-           setTareaSeleccionada(null);
-           limpiarFormulario();
-           }}
-            >
+        <div className="absolute top-0 right-0 h-full w-[350px] bg-white shadow-xl z-30 overflow-auto border-l border-gray-200">
+          <button 
+            className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl z-10"
+            onClick={() => {
+              setMostrarModalTarea(false);
+              setTareaSeleccionada(null);
+              limpiarFormulario();
+            }}
+          >
             &times; 
           </button>
 
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-          {tareaSeleccionada && (
-            <Subtareas tareaId={tareaSeleccionada.id} />
-          )}
+          <div className="bg-white w-full max-w-md p-6 relative">
+            {tareaSeleccionada && (
+              <div className="mb-6">
+                <Subtareas tareaId={tareaSeleccionada.id} />
+              </div>
+            )}
 
-           <h2 className="text-lg font-bold text-blue-900 mb-4">
-          {tareaSeleccionada ? 'Editar tarea' : 'Crear tarea'}
-          </h2>
+            <h2 className="text-xl font-bold text-blue-900 mb-6">
+              {tareaSeleccionada ? 'Editar tarea' : 'Crear tarea'}
+            </h2>
 
             <div className="space-y-4">
               <input
@@ -445,23 +430,23 @@ const agregarTarea = async () => {
                 placeholder="Título"
                 value={titulo}
                 onChange={e => setTitulo(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
               <input
                 type="text"
                 placeholder="Descripción"
                 value={descripcion}
                 onChange={e => setDescripcion(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
               
               <select
                 value={estado}
                 onChange={e => setEstado(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               >
                 <option value="pendiente">Pendiente</option>
-                <option value="progreso">progreso</option>
+                <option value="progreso">En progreso</option>
                 <option value="completada">Completada</option>
               </select>
 
@@ -470,77 +455,69 @@ const agregarTarea = async () => {
                 placeholder="Nota"
                 value={nota}
                 onChange={e => setNota(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
               
               <input
                 type="date"
                 value={fechaVencimiento}
                 onChange={e => setFechaVencimiento(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
-              </div>
 
-              <div className="flex justify-between items-center mt-6">
-               {tareaSeleccionada && ( 
-              <button onClick={eliminarTarea}
-               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-             >
-               Eliminar
-               </button>
-               )} 
+              <select
+                value={listaId}
+                onChange={(e) => setlistaId(e.target.value)}
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              >
+                <option value="">Seleccionar lista</option>
+                {listas.map((lista) => (
+                  <option key={lista.id} value={lista.id}>
+                    {lista.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-<div className="flex justify-end mt-4">
-  <button
-    className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded"
-    onClick={tareaSeleccionada ? actualizarTarea : agregarTarea}
-  >
-    {tareaSeleccionada ? 'Guardar cambios' : 'Crear'}
-  </button>
+            <div className="flex justify-between items-center mt-8">
+              {tareaSeleccionada && (
+                <button 
+                  onClick={eliminarTarea}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                  Eliminar
+                </button>
+              )}
 
-</div>
-
- </div>
-
-  <select
-  value={listaId}
-  onChange={(e) => setlistaId(e.target.value)}
-  className="w-full border border-gray-300 p-2 rounded"
->
-  <option value="">Seleccionar lista</option>
-  {listas.map((lista) => (
-    <option key={lista.id} value={lista.id}>
-      {lista.name}
-    </option>
-  ))}
-</select>
-
-
-
-
+              <button
+                className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2 rounded-lg transition-colors ml-auto"
+                onClick={tareaSeleccionada ? actualizarTarea : agregarTarea}
+              >
+                {tareaSeleccionada ? 'Guardar cambios' : 'Crear'}
+              </button>
             </div>
           </div>
+        </div>
       )}
-
-
 
       {/* MODAL LISTA */}
       {mostrarModalLista && (
-        <div className="absolute top-0 right-0 h-full w-[350px] bg-white shadow-lg z-30 overflow-auto border-l border-gray-200">
-          <button className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl"
-           onClick={() => {
-           setMostrarModalLista(false);
-           setListaEditando(null);
-           limpiarFormularioLista();
-           }}
-            >
+        <div className="absolute top-0 right-0 h-full w-[350px] bg-white shadow-xl z-30 overflow-auto border-l border-gray-200">
+          <button 
+            className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl"
+            onClick={() => {
+              setMostrarModalLista(false);
+              setListaEditando(null);
+              limpiarFormularioLista();
+            }}
+          >
             &times; 
           </button>
 
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-           <h2 className="text-lg font-bold text-blue-900 mb-4">
-          {listaEditando ? 'Editar lista' : 'Crear lista'}
-          </h2>
+          <div className="bg-white w-full max-w-md p-6 relative">
+            <h2 className="text-xl font-bold text-blue-900 mb-6">
+              {listaEditando ? 'Editar lista' : 'Crear lista'}
+            </h2>
 
             <div className="space-y-4">
               <input
@@ -548,7 +525,7 @@ const agregarTarea = async () => {
                 placeholder="Nombre de la lista"
                 value={nombreLista}
                 onChange={(e) => setNombreLista(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded text-sm"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
                 required
               />
               <input
@@ -556,201 +533,272 @@ const agregarTarea = async () => {
                 placeholder="Descripción (opcional)"
                 value={descripcionLista}
                 onChange={(e) => setDescripcionLista(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded text-sm"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
               />
-              </div>
 
-              <div className="flex justify-between items-center mt-6">
-               {listaEditando && ( 
-              <button onClick={eliminarLista}
-               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-             >
-               Eliminar
-               </button>
-               )} 
+              <select
+                value={usuarioId}
+                onChange={(e) => setUsuarioId(e.target.value)}
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              >
+                <option value="">Asignar a un usuario</option>
+                {usuarios.map((usuario) => (
+                  <option key={usuario.id} value={usuario.id}>
+                    {usuario.username}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-<div className="flex justify-end mt-4">
-  
-  <button
-    className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded text-sm"
-    onClick={listaEditando ? actualizarLista : agregarLista}
-  >
-    {listaEditando ? 'Guardar cambios' : 'Guardar lista'}
-  </button> 
-</div>
- </div>
+            <div className="flex justify-between items-center mt-8">
+              {listaEditando && (
+                <button 
+                  onClick={eliminarLista}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                  Eliminar
+                </button>
+              )}
 
-  <select
-  value={usuarioId}
-  onChange={(e) => setUsuarioId(e.target.value)}
-  className="w-full border border-gray-300 p-2 rounded"
->
-  <option value="">Asignar a un usuario</option>
-  {usuarios.map((usuario) => (
-    <option key={usuario.id} value={usuario.id}>
-      {usuario.username}
-    </option>
-  ))}
-</select>
-
-
+              <button
+                className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2 rounded-lg transition-colors text-sm ml-auto"
+                onClick={listaEditando ? actualizarLista : agregarLista}
+              >
+                {listaEditando ? 'Guardar cambios' : 'Guardar lista'}
+              </button> 
             </div>
           </div>
+        </div>
       )}
-      
 
+      {/* BOTÓN MENÚ HAMBURGUESA */}
+      <button
+        className="absolute top-4 left-4 text-blue-900 text-3xl z-40 focus:outline-none hover:bg-blue-50 p-2 rounded-lg transition-colors"
+        onClick={() => setMostrarPanelIzquierdo(prev => !prev)}
+      >
+        &#9776;
+      </button> 
 
-<button
-  className="absolute top-4 left-4 text-blue-900 text-3xl z-40 focus:outline-none"
- onClick={() => setMostrarPanelIzquierdo(prev => !prev)}
->
-  &#9776;
-</button> 
+      {/* PANEL IZQUIERDO */}
+      {mostrarPanelIzquierdo && (
+        <div className="h-full w-[280px] bg-white shadow-xl z-30 overflow-auto border-r border-gray-200 transition-transform duration-300">
+          <button
+            className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl"
+            onClick={() => setMostrarPanelIzquierdo(false)}
+          >
+            &times;
+          </button>
 
-{/* PANEL IZQUIERDO */}
-{mostrarPanelIzquierdo && (
-  <div className="h-full w-[250px] bg-white shadow-lg z-30 overflow-auto border-r border-gray-200 transition-transform duration-300">
-    <button
-      className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl"
-      onClick={() => setMostrarPanelIzquierdo(false)}
-    >
-      &times;
-    </button>
+          <div className="p-6 pt-16">
+            <h2 className="text-xl font-bold text-blue-900 mb-8">Menú</h2>
 
-    <h2 className="text-lg font-bold text-blue-900 mb-6 px-4 mt-12"></h2>
-
-    <ul className="space-y-4 px-4">
-    <li>
-  <button
-    onClick={() => {
-      setModoImportante(false);
-      setListaSeleccionada(null);
-      setMostrarDashboardListas(false);
-      setMostrarPanelIzquierdo(false);
-    }}
-    className="text-blue-900 font-semibold hover:underline"
-  >
-    Tareas
-  </button>
-</li>
-
-     <li>
-  <button
-    onClick={() => {
-      setModoImportante(true);
-      setMostrarDashboardListas(false);
-      setMostrarPanelIzquierdo(false);
-    }}
-    className="text-blue-900 font-semibold hover:underline"
-  >
-    Importante
-  </button>
-</li> <br></br><br></br>
-
-<li>
-  <button
-    onClick={() => {
-      
-      setMostrarDashboardListas(true);
-      setModoImportante(false);
-      setListaSeleccionada(null);
-      setMostrarPanelIzquierdo(false);
-    }}
-    className="text-blue-900 font-semibold hover:underline"
-  >
-   Listas
-  </button>
-</li>
-
-
-    </ul>
-  </div>
-)}
-
-        {/* PANEL PRINCIPAL - DASHBOARD DE LISTAS */}
-        {mostrarDashboardListas ? (
-          <section className={`transition-all duration-300 p-6 overflow-auto border-r border-amber-50 ${mostrarModalLista ? 'w-[calc(100%-350px)]' : 'w-full'}`}>
-            <div className="relative ml-auto mb-4 flex justify-end">
-
-             
-              <button
-                onClick={() => setMostrarMenuUsuario(!mostrarMenuUsuario)}
-                className="text-blue-900 hover:text-blue-700 focus:outline-none flex items-center space-x-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="text-sm font-medium">{wipeUser?.username || 'Usuario'}</span>
-              </button>
-
-              {mostrarMenuUsuario && (
-                <div className="absolute top-8 right-0 mt-1 w-48 bg-white border border-gray-200 rounded shadow-lg">
-                  <div className="px-3 py-2 text-blue-900 font-bold border-b truncate">
-                    {wipeUser?.username || 'Usuario'}
-                  </div>
-                  <button onClick={onLogout}
-                    className="w-full text-left px-3 py-2 text-red-700 font-bold hover:bg-gray-100"
-                  >
-                    Cerrar sesión
-                  </button>
-                </div>
-              )}
-            </div>
-           
-            <div className="w-full flex justify-end mb-4">
-             <input
-                type="text"
-                placeholder="+ Nueva"
-                className="white px-4 py-2 rounded focus:outline-none placeholder-gray-400 bg-transparent border-none cursor-pointer"
-                onClick={() => setMostrarModalLista(prev => !prev)}
-                readOnly
-            />
-            </div>
-            
             <ul className="space-y-3">
-              {listas.map(lista => (
-                <li
-                  key={lista.id}
-                  className="cursor-pointer bg-white p-4 rounded shadow flex justify-between items-center hover:bg-blue-50"
+              <li>
+                <button
                   onClick={() => {
-                    setUsuarioId(lista.usuarioId || '');
-                    setListaEditando(lista);
-                    setNombreLista(lista.name);
-                    setDescripcionLista(lista.description || '');
-                    setMostrarModalLista(true);
+                    setModoImportante(false);
+                    setListaSeleccionada(null);
+                    setMostrarDashboardListas(false);
+                    setMostrarPanelIzquierdo(false);
                   }}
+                  className="w-full text-left text-blue-900 font-semibold hover:bg-blue-50 p-3 rounded-lg transition-colors"
                 >
-                  <label
-                    className="flex items-center space-x-3 flex-grow cursor-pointer"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <input className="accent-blue-900"
-                      type="checkbox"
-                      checked={false}
-                      onChange={() => {}}
-                    />
-                    <span>
-                      {lista.name}
-                    </span>
-                  </label>
+                  📝 Tareas
+                </button>
+              </li>
 
-                  <button onClick={e => {
-                      e.stopPropagation();
-                      // Aquí podrías agregar funcionalidad de favoritos para listas si quieres
-                    }}
-                    aria-label="Marcar como favorita"
-                    className="focus:outline-none ml-3"
+              <li>
+                <button
+                  onClick={() => {
+                    setModoImportante(true);
+                    setMostrarDashboardListas(false);
+                    setMostrarPanelIzquierdo(false);
+                  }}
+                  className="w-full text-left text-blue-900 font-semibold hover:bg-blue-50 p-3 rounded-lg transition-colors"
+                >
+                  ⭐ Importante
+                </button>
+              </li>
+
+              <li className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setMostrarDashboardListas(true);
+                    setModoImportante(false);
+                    setListaSeleccionada(null);
+                    setMostrarPanelIzquierdo(false);
+                  }}
+                  className="w-full text-left text-blue-900 font-semibold hover:bg-blue-50 p-3 rounded-lg transition-colors"
+                >
+                  📋 Listas
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* PANEL PRINCIPAL */}
+      <section className={`transition-all duration-300 flex-1 p-6 overflow-auto ${mostrarModalTarea || mostrarModalLista ? 'pr-[380px]' : ''}`}>
+        {/* HEADER CON TÍTULO DINÁMICO */}
+        <div className="flex justify-between items-center mb-8 ml-12">
+          <h1 className="text-3xl font-bold text-blue-900">
+            {obtenerTituloActual()}
+          </h1>
+
+          <div className="relative">
+            <button
+              onClick={() => setMostrarMenuUsuario(!mostrarMenuUsuario)}
+              className="text-blue-900 hover:text-blue-700 focus:outline-none flex items-center space-x-2 bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-all"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span className="text-sm font-medium">{wipeUser?.username || 'Usuario'}</span>
+            </button>
+
+            {mostrarMenuUsuario && (
+              <div className="absolute top-12 right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="px-3 py-2 text-blue-900 font-bold border-b truncate">
+                  {wipeUser?.username || 'Usuario'}
+                </div>
+                <button onClick={onLogout}
+                  className="w-full text-left px-3 py-2 text-red-700 font-bold hover:bg-gray-100 transition-colors"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+           
+        {/* BOTÓN NUEVA */}
+        <div className="w-full flex justify-end mb-6">
+          <button
+            className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
+            onClick={() => mostrarDashboardListas ? setMostrarModalLista(true) : setMostrarModalTarea(true)}
+          >
+            + Nueva {mostrarDashboardListas ? 'Lista' : 'Tarea'}
+          </button>
+        </div>
+
+        {/* DASHBOARD DE LISTAS */}
+        {mostrarDashboardListas ? (
+          <ul className="space-y-4">
+            {listas.map(lista => (
+              <li
+                key={lista.id}
+                className="cursor-pointer bg-white p-5 rounded-lg shadow-sm hover:shadow-md flex justify-between items-center hover:bg-blue-50 transition-all border border-gray-100"
+                onClick={() => {
+                  setUsuarioId(lista.usuarioId || '');
+                  setListaEditando(lista);
+                  setNombreLista(lista.name);
+                  setDescripcionLista(lista.description || '');
+                  setMostrarModalLista(true);
+                }}
+              >
+                <label
+                  className="flex items-center space-x-3 flex-grow cursor-pointer"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <input className="accent-blue-900"
+                    type="checkbox"
+                    checked={false}
+                    onChange={() => {}}
+                  />
+                  <div>
+                    <span className="font-medium text-gray-800">{lista.name}</span>
+                    {lista.description && (
+                      <p className="text-sm text-gray-500 mt-1">{lista.description}</p>
+                    )}
+                  </div>
+                </label>
+
+                <button onClick={e => {
+                    e.stopPropagation();
+                    // Funcionalidad de favoritos para listas
+                  }}
+                  aria-label="Marcar como favorita"
+                  className="focus:outline-none ml-3"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-gray-400 hover:text-blue-900 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
                   >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"
+                    />
+                  </svg>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          /* DASHBOARD DE TAREAS */
+          <ul className="space-y-4">
+            {(modoImportante ? tareas.filter(t => t.favorito) : tareas).map(tarea => (
+              <li
+                key={tarea.id}
+                className="cursor-pointer bg-white p-5 rounded-lg shadow-sm hover:shadow-md flex justify-between items-center hover:bg-blue-50 transition-all border border-gray-100"
+                onClick={() => setTareaSeleccionada(tarea)}
+              >
+                <label
+                  className="flex items-center space-x-3 flex-grow cursor-pointer"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <input className="accent-blue-900"
+                    type="checkbox"
+                    checked={tarea.realizada}
+                    onChange={() => toggleCompletadaTarea(tarea.id)}
+                  />
+                  <div className="flex-grow">
+                    <span className={`font-medium transition-all ${tarea.realizada ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                      {tarea.titulo}
+                    </span>
+                    {tarea.descripcion && (
+                      <p className="text-sm text-gray-500 mt-1">{tarea.descripcion}</p>
+                    )}
+                    {tarea.fechaVencimiento && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Vence: {new Date(tarea.fechaVencimiento).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </label>
+
+                <button onClick={e => {
+                    e.stopPropagation();
+                    toggleFavorita(tarea.id);
+                  }}
+                  aria-label={tarea.favorito ? 'Quitar de favoritas' : 'Marcar como favorita'}
+                  className="focus:outline-none ml-3"
+                >
+                  {tarea.favorito ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-gray-400 hover:text-blue-900 transition"
+                      className="h-6 w-6 text-blue-800"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-gray-400 hover:text-blue-900 transition-colors"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -762,125 +810,40 @@ const agregarTarea = async () => {
                         d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"
                       />
                     </svg>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
+                  )}
+                </button>
+              </li>
+            ))}
 
-
-
-
-        ) : (
-          /* PANEL PRINCIPAL - TAREAS */
-          <section className={`transition-all duration-300 p-6 overflow-auto border-r border-amber-50 ${mostrarModalTarea ? 'w-[calc(100%-350px)]' : 'w-full'}`}>
-            <div className="relative ml-auto mb-4 flex justify-end">
-              <button
-                onClick={() => setMostrarMenuUsuario(!mostrarMenuUsuario)}
-                className="text-blue-900 hover:text-blue-700 focus:outline-none flex items-center space-x-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="text-sm font-medium">{wipeUser?.username || 'Usuario'}</span>
-              </button>
-
-              {mostrarMenuUsuario && (
-                <div className="absolute top-8 right-0 mt-1 w-48 bg-white border border-gray-200 rounded shadow-lg">
-                  <div className="px-3 py-2 text-blue-900 font-bold border-b truncate">
-                    {wipeUser?.username || 'Usuario'}
-                  </div>
-                  <button onClick={onLogout}
-                    className="w-full text-left px-3 py-2 text-red-700 font-bold hover:bg-gray-100"
-                  >
-                    Cerrar sesión
-                  </button>
+            {/* MENSAJE CUANDO NO HAY TAREAS */}
+            {(modoImportante ? tareas.filter(t => t.favorito) : tareas).length === 0 && (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">
+                  {modoImportante ? '⭐' : '📝'}
                 </div>
-              )}
-            </div>
-           
-            <div className="w-full flex justify-end mb-4">
-             <input
-                type="text"
-                placeholder="+ Nueva"
-                className="white px-4 py-2 rounded focus:outline-none placeholder-gray-400 bg-transparent border-none cursor-pointer"
-                onClick={() => setMostrarModalTarea(prev => !prev)}
-                readOnly
-            />
-
-            {listaSeleccionada && (
-              <h2 className="text-xl font-bold text-blue-900 mb-4">
-                 List: {listaSeleccionada.name}  
-              </h2>
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                  {modoImportante ? 'No hay tareas importantes' : 'No hay tareas aún'}
+                </h3>
+                <p className="text-gray-400">
+                  {modoImportante 
+                    ? 'Marca algunas tareas como favoritas para verlas aquí' 
+                    : 'Crea tu primera tarea para empezar'
+                  }
+                </p>
+              </div>
             )}
-            </div>
-            
-            <ul className="space-y-3">
-              {(modoImportante ? tareas.filter(t => t.favorito) : tareas).map(tarea => (
-                <li
-                  key={tarea.id}
-                  className="cursor-pointer bg-white p-4 rounded shadow flex justify-between items-center hover:bg-blue-50"
-                  onClick={() => setTareaSeleccionada(tarea)}
-                >
-                  <label
-                    className="flex items-center space-x-3 flex-grow cursor-pointer"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <input className="accent-blue-900"
-                      type="checkbox"
-                      checked={tarea.realizada}
-                      onChange={() => toggleCompletadaTarea(tarea.id)}
-                    />
-                    <span className={tarea.realizada ? 'line-through text-gray-400' : ''}>
-                      {tarea.titulo}
-                    </span>
-                  </label>
-
-                  <button onClick={e => {
-                      e.stopPropagation();
-                      toggleFavorita(tarea.id);
-                    }}
-                    aria-label={tarea.favorito ? 'Quitar de favoritas' : 'Marcar como favorita'}
-                    className="focus:outline-none ml-3"
-                  >
-                    {tarea.favorito ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6 text-blue-800"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                      </svg>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6 text-gray-400 hover:text-blue-900 transition"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
+          </ul>
         )}
+
+        {/* MENSAJE CUANDO NO HAY LISTAS */}
+        {mostrarDashboardListas && listas.length === 0 && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">📋</div>
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">No hay listas aún</h3>
+            <p className="text-gray-400">Crea tu primera lista para organizar tus tareas</p>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
