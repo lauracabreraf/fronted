@@ -1,9 +1,7 @@
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Subtareas from '../Paginas/Subtareas';
 
 export default function Dashboard({ usuario, onLogout }) {
-   
   const [tareas, setTareas] = useState([]);
   const [usuarios, setUsuarios] = useState([]); 
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
@@ -22,22 +20,19 @@ export default function Dashboard({ usuario, onLogout }) {
   const [usuarioId, setUsuarioId] = useState('1'); 
   const [listaId, setlistaId] = useState('');
 
-  // Nuevos estados para el dashboard de listas
   const [mostrarDashboardListas, setMostrarDashboardListas] = useState(false);
   const [mostrarModalLista, setMostrarModalLista] = useState(false);
 
-  const user = localStorage.getItem('usuario')
-  const wipeUser = JSON.parse(user) 
 
-  // Estados para listas
+  const user = localStorage.getItem('usuario');
+  const wipeUser = JSON.parse(user);
+
   const [nombreLista, setNombreLista] = useState('');
   const [descripcionLista, setDescripcionLista] = useState('');
   const [listas, setListas] = useState([]);
   const [listaSeleccionada, setListaSeleccionada] = useState(null);
   const [listaEditando, setListaEditando] = useState(null);
-  const [nuevaDescripcionLista, setNuevaDescripcionLista] = useState('');
 
-  // Función para obtener el título actual
   const obtenerTituloActual = () => {
     if (mostrarDashboardListas) return 'Listas';
     if (modoImportante) return 'Importante';
@@ -74,7 +69,6 @@ export default function Dashboard({ usuario, onLogout }) {
     }
   };
 
-  // Función separada para cargar tareas
   const cargarTareas = async () => {
     try {
       const token = localStorage.getItem('token'); 
@@ -134,92 +128,96 @@ export default function Dashboard({ usuario, onLogout }) {
     setDescripcionLista('');
   };
 
-const agregarTarea = async () => {
-  if (!titulo.trim()) return;
-
-  try {
-    const token = localStorage.getItem('token');
-
-    // Si no se selecciona un usuario, usar el usuarioId actual (de localStorage)
-    const tareaUsuarioId = usuarioId || wipeUser?.id;
-
-    const nuevaTarea = {
-      titulo: titulo,
-      descripcion: descripcion,
-      estado: estado,
-      favorito,
-      realizada,
-      nota: nota,
-      fechaVencimiento: fechaVencimiento,
-      usuarioId: tareaUsuarioId,  // Asegúrate de enviar el usuarioId correcto
-      ...(listaId && { listaId })  // Solo enviar listaId si está seleccionado
-    };
-
-    console.log('nueva tarea', nuevaTarea);
-
-    const response = await fetch('http://localhost:3000/tarea', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(nuevaTarea),
-    });
-
-    if (!response.ok) {
-      throw new Error('Error al crear tarea');
-    }
-
-    const tareaCreada = await response.json();
-    setTareas([tareaCreada, ...tareas]);
-
-    if (tareaCreada.favorito && setTareasImportantes) {
-      setTareasImportantes(prev => [tareaCreada, ...prev]);
-    }
-
-    limpiarFormulario();
-    setMostrarModalTarea(false);
-  } catch (error) {
-    console.error('Error al agregar tarea:', error);
-  }
-};
-
-  const actualizarTarea = async () => {
-    if (!titulo.trim() || !tareaSeleccionada) return;
+  const agregarTarea = async () => {
+    if (!titulo.trim()) return;
 
     try {
       const token = localStorage.getItem('token');
-      const body = {
-        titulo,
-        descripcion,
-        estado,
-        nota,
-        fechaVencimiento,
-        usuarioId,
-        listaId 
+      const tareaUsuarioId = usuarioId || wipeUser?.id;
+
+      const nuevaTarea = {
+        titulo: titulo,
+        ...(descripcion && { descripcion }),
+        ...(estado && { estado }),
+        ...(nota && { nota }),
+        ...(fechaVencimiento && { fechaVencimiento }),
+        usuarioId: tareaUsuarioId,
+        ...(listaId && { listaId })
       };
 
-      const response = await fetch(`http://localhost:3000/tarea/${tareaSeleccionada.id}`, {
-        method: 'PUT',
+      const response = await fetch('http://localhost:3000/tarea', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(nuevaTarea),
       });
 
-      if (!response.ok) throw new Error('Error al actualizar tarea');
+      if (!response.ok) {
+        throw new Error('Error al crear tarea');
+      }
 
-      const tareaActualizada = await response.json();
+      const tareaCreada = await response.json();
+      setTareas([tareaCreada, ...tareas]);
 
-      setTareas(tareas.map(t => t.id === tareaActualizada.id ? tareaActualizada : t));
-      setTareaSeleccionada(null);
       limpiarFormulario();
       setMostrarModalTarea(false);
     } catch (error) {
-      console.error('Error al actualizar tarea:', error);
+      console.error('Error al agregar tarea:', error);
     }
   };
+
+ const actualizarTarea = async () => {
+  if (!titulo.trim() || !tareaSeleccionada) return;
+
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Construir el body solo con los campos que tienen valores válidos
+    const body = {
+      titulo: titulo.trim(),
+      ...(descripcion && descripcion.trim() && { descripcion: descripcion.trim() }),
+      ...(estado && { estado }),
+      ...(nota && nota.trim() && { nota: nota.trim() }),
+      ...(fechaVencimiento && { fechaVencimiento }),
+      ...(usuarioId && { usuarioId }),
+      ...(listaId && { listaId })
+    };
+
+    console.log('Actualizando tarea:', tareaSeleccionada.id, body); // Para debug
+
+    const response = await fetch(`http://localhost:3000/tarea/${tareaSeleccionada.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Error del servidor:', errorData);
+      throw new Error(`Error al actualizar tarea: ${response.status}`);
+    }
+
+    const tareaActualizada = await response.json();
+    console.log('Tarea actualizada exitosamente:', tareaActualizada); // Para debug
+
+    // Actualizar la lista de tareas
+    setTareas(tareas.map(t => t.id === tareaActualizada.id ? tareaActualizada : t));
+    
+    // Limpiar estado
+    setTareaSeleccionada(null);
+    limpiarFormulario();
+    setMostrarModalTarea(false);
+    
+  } catch (error) {
+    console.error('Error al actualizar tarea:', error);
+    alert('Error al actualizar la tarea. Por favor, intenta de nuevo.');
+  }
+};
 
   const eliminarTarea = async () => {
     if (!tareaSeleccionada) return;
@@ -248,99 +246,133 @@ const agregarTarea = async () => {
   };
 
   const toggleCompletadaTarea = async (id) => {
-    const tarea = tareas.find(t => t.id === id);
-    if (!tarea) return;
+  const tarea = tareas.find(t => t.id === id);
+  if (!tarea) return;
 
-    try {
-      const token = localStorage.getItem('token');
-      const body = {
-        realizada: !tarea.realizada,
-      };
-
-      const response = await fetch(`http://localhost:3000/tarea/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) throw new Error('Error al actualizar tarea');
-
-      const tareaActualizada = await response.json();
-      setTareas(tareas.map(t => (t.id === id ? tareaActualizada : t)));
-
-      if (tareaSeleccionada && tareaSeleccionada.id === id) {
-        setTareaSeleccionada(tareaActualizada);
-      }
-    } catch (error) {
-      console.error('Error al marcar como completada:', error);
-    }
-  };
-
-  const toggleFavorita = async (id) => {
-    const tarea = tareas.find(t => t.id === id);
-    if (!tarea) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      const body = {
-        favorito: !tarea.favorito,
-      };
-
-      const response = await fetch(`http://localhost:3000/tarea/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) throw new Error('Error al actualizar favorita');
-
-      const tareaActualizada = await response.json();
-      setTareas(tareas.map(t => (t.id === id ? tareaActualizada : t)));
-
-      if (tareaSeleccionada && tareaSeleccionada.id === id) {
-        setTareaSeleccionada(tareaActualizada);
-      }
-    } catch (error) {
-      console.error('Error al marcar como favorita:', error);
-    }
-  };
-  
-  const agregarLista = async () => {
-  if (!nombreLista.trim()) return;
-
-  const token = localStorage.getItem('token');
   try {
-    const response = await fetch('http://localhost:3000/listas', {
-      method: 'POST',
+    const token = localStorage.getItem('token');
+    const body = {
+      realizada: !tarea.realizada,
+    };
+
+    console.log('Actualizando estado completada para tarea:', id, body); // Para debug
+
+    const response = await fetch(`http://localhost:3000/tarea/${id}`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        name: nombreLista,
-        description: descripcionLista,
-        ...(usuarioId && { usuarioId }), // Solo agregar usuarioId si existe
-      }),
+      body: JSON.stringify(body),
     });
 
-    if (!response.ok) throw new Error('Error al crear lista');
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Error del servidor:', errorData);
+      throw new Error(`Error al actualizar tarea: ${response.status}`);
+    }
 
-    const nuevaLista = await response.json();
-    setListas([nuevaLista, ...listas]);
+    const tareaActualizada = await response.json();
+    console.log('Toggle completada exitoso:', tareaActualizada); // Para debug
 
-    limpiarFormularioLista();
-    setMostrarModalLista(false);
-    await cargarListas();
+    // Actualizar la lista de tareas
+    setTareas(prevTareas => 
+      prevTareas.map(t => t.id === id ? tareaActualizada : t)
+    );
+
+    // Si la tarea está seleccionada, también actualizarla
+    if (tareaSeleccionada && tareaSeleccionada.id === id) {
+      setTareaSeleccionada(tareaActualizada);
+    }
+    
   } catch (error) {
-    console.error('Error al crear lista:', error);
+    console.error('Error al marcar como completada:', error);
+    alert('Error al actualizar el estado de la tarea. Por favor, intenta de nuevo.');
   }
 };
+
+  const toggleFavorita = async (id) => {
+  const tarea = tareas.find(t => t.id === id);
+  if (!tarea) return;
+
+  try {
+    const token = localStorage.getItem('token');
+    const body = {
+      favorito: !tarea.favorito,
+    };
+
+    console.log('Actualizando favorito para tarea:', id, body); // Para debug
+
+    const response = await fetch(`http://localhost:3000/tarea/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Error del servidor:', errorData);
+      throw new Error(`Error al actualizar favorita: ${response.status}`);
+    }
+
+    const tareaActualizada = await response.json();
+    console.log('Toggle favorita exitoso:', tareaActualizada); // Para debug
+
+    // Actualizar la lista de tareas
+    setTareas(prevTareas => 
+      prevTareas.map(t => t.id === id ? tareaActualizada : t)
+    );
+
+    // Si la tarea está seleccionada, también actualizarla
+    if (tareaSeleccionada && tareaSeleccionada.id === id) {
+      setTareaSeleccionada(tareaActualizada);
+    }
+    
+  } catch (error) {
+    console.error('Error al marcar como favorita:', error);
+    alert('Error al actualizar el estado favorito de la tarea. Por favor, intenta de nuevo.');
+  }
+};
+
+
+
+
+  
+  const agregarLista = async () => {
+    if (!nombreLista.trim()) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch('http://localhost:3000/listas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: nombreLista,
+          description: descripcionLista,
+          ...(usuarioId && { usuarioId }),
+        }),
+      });
+
+      if (!response.ok) throw new Error('Error al crear lista');
+
+      const nuevaLista = await response.json();
+      setListas([nuevaLista, ...listas]);
+
+      limpiarFormularioLista();
+      setMostrarModalLista(false);
+      await cargarListas();
+    } catch (error) {
+      console.error('Error al crear lista:', error);
+    }
+  };
+
+
 
   const actualizarLista = async () => {
     if (!listaEditando?.id || !nombreLista.trim()) return;
@@ -397,11 +429,29 @@ const agregarTarea = async () => {
     }
   };
 
+
+
+
+
+  const abrirModalNuevaTarea = () => {
+    setTareaSeleccionada(null);
+    limpiarFormulario();
+    setMostrarModalTarea(true);
+  };
+
+  const abrirModalNuevaLista = () => {
+    setListaEditando(null);
+    limpiarFormularioLista();
+    setMostrarModalLista(true);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
+
       {/* MODAL TAREA */}
       {mostrarModalTarea && (
         <div className="absolute top-0 right-0 h-full w-[350px] bg-white shadow-xl z-30 overflow-auto border-l border-gray-200">
+          
           <button 
             className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl z-10"
             onClick={() => {
@@ -414,12 +464,6 @@ const agregarTarea = async () => {
           </button>
 
           <div className="bg-white w-full max-w-md p-6 relative">
-            {tareaSeleccionada && (
-              <div className="mb-6">
-                <Subtareas tareaId={tareaSeleccionada.id} />
-              </div>
-            )}
-
             <h2 className="text-xl font-bold text-blue-900 mb-6">
               {tareaSeleccionada ? 'Editar tarea' : 'Crear tarea'}
             </h2>
@@ -430,13 +474,16 @@ const agregarTarea = async () => {
                 placeholder="Título"
                 value={titulo}
                 onChange={e => setTitulo(e.target.value)}
+                maxLength={100}
                 className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
+              
               <input
                 type="text"
                 placeholder="Descripción"
                 value={descripcion}
                 onChange={e => setDescripcion(e.target.value)}
+                maxLength={255}
                 className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
               
@@ -455,6 +502,7 @@ const agregarTarea = async () => {
                 placeholder="Nota"
                 value={nota}
                 onChange={e => setNota(e.target.value)}
+                maxLength={500}
                 className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
               
@@ -479,6 +527,12 @@ const agregarTarea = async () => {
               </select>
             </div>
 
+            {tareaSeleccionada && (
+              <div className="mb-6 mt-6">
+                <Subtareas tareaId={tareaSeleccionada.id} />
+              </div>
+            )}
+
             <div className="flex justify-between items-center mt-8">
               {tareaSeleccionada && (
                 <button 
@@ -499,6 +553,12 @@ const agregarTarea = async () => {
           </div>
         </div>
       )}
+
+
+
+
+
+
 
       {/* MODAL LISTA */}
       {mostrarModalLista && (
@@ -525,6 +585,7 @@ const agregarTarea = async () => {
                 placeholder="Nombre de la lista"
                 value={nombreLista}
                 onChange={(e) => setNombreLista(e.target.value)}
+                maxLength={50}
                 className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
                 required
               />
@@ -533,6 +594,7 @@ const agregarTarea = async () => {
                 placeholder="Descripción (opcional)"
                 value={descripcionLista}
                 onChange={(e) => setDescripcionLista(e.target.value)}
+                maxLength={255}
                 className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
               />
 
@@ -549,6 +611,8 @@ const agregarTarea = async () => {
                 ))}
               </select>
             </div>
+
+            
 
             <div className="flex justify-between items-center mt-8">
               {listaEditando && (
@@ -644,6 +708,8 @@ const agregarTarea = async () => {
           </h1>
 
           <div className="relative">
+
+            
             <button
               onClick={() => setMostrarMenuUsuario(!mostrarMenuUsuario)}
               className="text-blue-900 hover:text-blue-700 focus:outline-none flex items-center space-x-2 bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-all"
@@ -679,11 +745,18 @@ const agregarTarea = async () => {
         {/* BOTÓN NUEVA */}
         <div className="w-full flex justify-end mb-6">
           <button
-            className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
-            onClick={() => mostrarDashboardListas ? setMostrarModalLista(true) : setMostrarModalTarea(true)}
-          >
-            + Nueva {mostrarDashboardListas ? 'Lista' : 'Tarea'}
-          </button>
+  className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
+  onClick={() =>
+  mostrarDashboardListas
+    ? setMostrarModalLista(prev => !prev)
+    : setMostrarModalTarea(prev => !prev)
+}
+
+>
+  + Nueva {mostrarDashboardListas ? 'Lista' : 'Tarea'}
+</button>
+
+
         </div>
 
         {/* DASHBOARD DE LISTAS */}
@@ -718,9 +791,10 @@ const agregarTarea = async () => {
                   </div>
                 </label>
 
+                
+
                 <button onClick={e => {
                     e.stopPropagation();
-                    // Funcionalidad de favoritos para listas
                   }}
                   aria-label="Marcar como favorita"
                   className="focus:outline-none ml-3"
@@ -775,6 +849,8 @@ const agregarTarea = async () => {
                     )}
                   </div>
                 </label>
+
+                
 
                 <button onClick={e => {
                     e.stopPropagation();
