@@ -599,7 +599,6 @@ const agregarTarea = async () => {
                     setModoImportante(false);
                     setListaSeleccionada(null);
                     setMostrarDashboardListas(false);
-                    setMostrarPanelIzquierdo(false);
                   }}
                   className="w-full text-left text-blue-900 font-semibold hover:bg-blue-50 p-3 rounded-lg transition-colors"
                 >
@@ -612,7 +611,6 @@ const agregarTarea = async () => {
                   onClick={() => {
                     setModoImportante(true);
                     setMostrarDashboardListas(false);
-                    setMostrarPanelIzquierdo(false);
                   }}
                   className="w-full text-left text-blue-900 font-semibold hover:bg-blue-50 p-3 rounded-lg transition-colors"
                 >
@@ -626,7 +624,6 @@ const agregarTarea = async () => {
                     setMostrarDashboardListas(true);
                     setModoImportante(false);
                     setListaSeleccionada(null);
-                    setMostrarPanelIzquierdo(false);
                   }}
                   className="w-full text-left text-blue-900 font-semibold hover:bg-blue-50 p-3 rounded-lg transition-colors"
                 >
